@@ -190,4 +190,4 @@ Vídeo demonstrativo do projeto:
 ## Repositório
 
 GitHub do projeto:
-> LINK_DO_REPOSITORIO
+(https://github.com/rafaelclins/goodwe-chatbot-sprint2)
