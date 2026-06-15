@@ -183,11 +183,11 @@ As respostas são baseadas:
 ## Demonstração
 
 Vídeo demonstrativo do projeto:
-> LINK_DO_VIDEO
+> LINK_DO_VIDEO(https://youtube.com/shorts/Jqk7_mAXsr0
 
 ---
 
 ## Repositório
 
 GitHub do projeto:
-(https://github.com/rafaelclins/goodwe-chatbot-sprint2)
+> LINK_DO_PROJETO(https://github.com/rafaelclins/goodwe-chatbot-sprint2)
