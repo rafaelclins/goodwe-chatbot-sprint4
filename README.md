@@ -183,7 +183,7 @@ As respostas são baseadas:
 ## Demonstração
 
 Vídeo demonstrativo do projeto:
-> LINK_DO_VIDEO(https://youtube.com/shorts/Jqk7_mAXsr0
+> LINK_DO_VIDEO(https://youtube.com/shorts/Jqk7_mAXsr0)
 
 ---
 
