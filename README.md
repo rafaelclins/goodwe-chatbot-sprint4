@@ -1,4 +1,4 @@
-# GoodWe Chatbot — Sprint 2
+# GoodWe Chatbot — Sprint 3
 
 Chatbot técnico desenvolvido para auxiliar em questões relacionadas à recarga de veículos elétricos em condomínios, utilizando IA generativa com contexto especializado da GoodWe.
 
@@ -19,13 +19,16 @@ Chatbot técnico desenvolvido para auxiliar em questões relacionadas à recarga
 
 O objetivo deste projeto é desenvolver um chatbot contextualizado para responder perguntas relacionadas ao ecossistema de recarga de veículos elétricos em condomínios.
 
-O sistema foi desenvolvido como parte da Sprint 2 do Challenge FIAP + GoodWe 2026.
+O sistema foi desenvolvido como parte do Challenge FIAP + GoodWe 2026, evoluído da Sprint 2 (chatbot funcional) para a Sprint 3 (pipeline com memória, guardrails, structured output e avaliação automatizada).
 
 O chatbot utiliza:
-- histórico de mensagens
+- histórico de mensagens por sessão
 - system prompt especializado
-- integração com modelo de IA
+- integração com modelo de IA via Ollama Cloud
 - controle de contexto técnico
+- limite de histórico por tokens
+- guardrails de escopo e prompt injection
+- saída estruturada validada com Pydantic v2
 
 O foco principal do projeto é garantir respostas coerentes, contextualizadas e alinhadas ao domínio de infraestrutura de recarga elétrica.
 
@@ -33,23 +36,34 @@ O foco principal do projeto é garantir respostas coerentes, contextualizadas e 
 
 ## Funcionalidades Implementadas
 
+Sprint 2:
+- Chatbot funcional em linha de comando
 - Histórico de conversa
 - Contexto persistente via system prompt
-- Controle de escopo temático
-- Respostas técnicas contextualizadas
-- Proteção básica contra perguntas fora do contexto
 - Integração com API de IA generativa
 - Leitura segura de API Key via `.env`
+
+Sprint 3:
+- Arquitetura baseada em LCEL (`ChatPromptTemplate | ChatOllama | StrOutputParser`)
+- Memória de conversa por `session_id` com `RunnableWithMessageHistory`
+- Controle de histórico por tokens com `trim_messages` (limite padrão de 1000 tokens)
+- Guardrails de escopo temático e detecção de prompt injection
+- Saída estruturada validada com Pydantic v2 (`ConsultaRecarga`)
+- Prompts versionados (`v1`, `v2`, `v2.1`, `v2.2`)
+- Medição de tokens de prompt com `tiktoken`
+- Avaliação automatizada com 16 casos de teste e fake model
 
 ---
 
 ## Tecnologias Utilizadas
 
-- Python 3.13
-- OpenRouter API
-- Meta Llama 3 8B Instruct
+- Python 3.12
+- LangChain / langchain-core / langchain-ollama
+- Ollama Cloud API
+- Modelo `gpt-oss:120b`
+- Pydantic v2
+- tiktoken
 - python-dotenv
-- PyCharm
 
 ---
 
@@ -58,30 +72,97 @@ O foco principal do projeto é garantir respostas coerentes, contextualizadas e 
 ```text
 goodwe-chatbot-sprint2/
 │
-├── chatbot.py
+├── chatbot.py                  # Chatbot CLI (Sprint 2)
 ├── README.md
 ├── requirements.txt
 ├── .gitignore
 ├── .env.example
 │
-└── prompts/
-    └── system_prompt.txt
+├── prompts/                    # Prompts versionados
+│   ├── system_prompt.txt       # Prompt original (Sprint 2)
+│   ├── system_prompt_v1.txt
+│   ├── system_prompt_v2.txt
+│   ├── system_prompt_v2.1.txt
+│   └── system_prompt_v2.2.txt  # Prompt ativo na arquitetura
+│
+├── src/
+│   ├── chain/
+│   │   ├── builder.py          # LCEL: prompt | modelo | parser
+│   │   └── memoria.py          # RunnableWithMessageHistory + trim_messages
+│   ├── guardrails/
+│   │   ├── moderation.py       # Detecção de prompt injection
+│   │   ├── scope_validator.py  # Validação de escopo temático
+│   │   └── pipeline.py         # Orquestração da entrada do usuário
+│   └── schemas/
+│       └── consulta_recarga.py # Schema Pydantic v2 de saída
+│
+├── scripts/
+│   └── measure_prompt.py       # Medição de tokens com tiktoken
+│
+├── evals/
+│   ├── run_sprint3.py          # Executor de avaliação (fake model)
+│   └── sprint3_cases.json      # 16 casos de avaliação
+│
+└── tests/                      # Suíte de testes automatizados
 ```
 
 ---
 
-## Funcionamento do Sistema
+## Arquitetura (Sprint 3)
 
-O chatbot funciona através do envio de mensagens para um modelo de linguagem hospedado via OpenRouter API.
+A cadeia principal é construída com LangChain Expression Language (LCEL):
 
-O sistema:
-1. Carrega o system prompt especializado
-2. Recebe a mensagem do usuário
-3. Mantém o histórico da conversa
-4. Envia o contexto completo para o modelo
-5. Retorna a resposta contextualizada
+```python
+ChatPromptTemplate | ChatOllama | StrOutputParser
+```
 
-O histórico de mensagens permite que o chatbot mantenha coerência durante conversas contínuas.
+Em `src/chain/builder.py`, o prompt é montado com `ChatPromptTemplate` usando o system prompt versionado (`prompts/system_prompt_v2.2.txt`), um `MessagesPlaceholder` para o histórico e a mensagem humana com as instruções de formato. O modelo é o `gpt-oss:120b` acessado via Ollama Cloud (`https://ollama.com/v1/`).
+
+### Memória
+
+Em `src/chain/memoria.py`, o histórico é mantido por sessão com `RunnableWithMessageHistory` e `InMemoryChatMessageHistory`, indexado por `session_id`. Sessões diferentes não compartilham histórico.
+
+O controle de tamanho é feito com `trim_messages`:
+
+- limite padrão de 1000 tokens (`max_history_tokens=1000`);
+- contagem aproximada de tokens;
+- mantém as mensagens mais recentes (`strategy="last"`);
+- não mantém mensagens parcialmente (`allow_partial=False`);
+- o histórico recortado começa em uma mensagem humana (`start_on="human"`).
+
+O recorte é aplicado antes e depois de cada chamada à cadeia, garantindo que o histórico armazenado e o histórico fornecido ao modelo respeitem o limite.
+
+### Guardrails
+
+Em `src/guardrails/`, a entrada passa por duas validações antes de chegar ao modelo:
+
+- `moderation.py`: detecta tentativas de prompt injection (jailbreak, revelação de instruções internas, alteração de escopo e outras);
+- `scope_validator.py`: valida o escopo temático (recarga, energia, infraestrutura elétrica, rateio de custos) e bloqueia aconselhamento jurídico, financeiro, decisões de segurança elétrica e especificações exatas de produto sem base.
+
+Entradas bloqueadas recebem resposta local definida no `pipeline.py` e não chegam ao modelo nem são gravadas no histórico.
+
+### Structured Output
+
+A resposta é validada como instância do schema Pydantic v2 `ConsultaRecarga` (`src/schemas/consulta_recarga.py`) com `PydanticOutputParser`. O parser falha se a resposta do modelo não for um JSON válido no formato esperado.
+
+### Prompts Versionados
+
+Os prompts evoluíram ao longo dos sprints:
+
+- `system_prompt.txt`: prompt original (Sprint 2);
+- `system_prompt_v1.txt`: primeira versão estruturada;
+- `system_prompt_v2.txt`: escopo explícito, prioridade de instruções e fronteiras de guardrail;
+- `system_prompt_v2.1.txt`: definição ampliada de escopo e fronteira de fontes de dados;
+- `system_prompt_v2.2.txt`: versão ativa, com fonte de dados restrita ao contexto e instruções preservadas de fórmulas e constantes.
+
+### Medição de Tokens
+
+O script `scripts/measure_prompt.py` mede o tamanho dos prompts com `tiktoken` (encoding `cl100k_base`), retornando caracteres, palavras e tokens de qualquer prompt da pasta `prompts/`.
+
+```bash
+python scripts/measure_prompt.py
+python scripts/measure_prompt.py --prompt prompts/system_prompt_v2.2.txt
+```
 
 ---
 
@@ -112,18 +193,49 @@ pip install -r requirements.txt
 Crie um arquivo `.env` na raiz do projeto:
 
 ```env
-OPENROUTER_API_KEY=sua_chave_aqui
+OLLAMA_API_KEY=sua_chave_aqui
 ```
 
 ---
 
 ## Execução
 
-Execute o chatbot com:
+Execute o chatbot CLI (Sprint 2) com:
 
 ```bash
 python chatbot.py
 ```
+
+Para executar a suíte de testes:
+
+```bash
+python -m unittest discover -s tests -v
+```
+
+Para executar a avaliação com fake model (sem chamadas reais ao modelo):
+
+```bash
+python evals/run_sprint3.py
+```
+
+---
+
+## Resultados da Avaliação (Sprint 3)
+
+A avaliação roda 16 casos contra o pipeline completo usando um fake model, sem fazer chamadas reais ao Ollama. Resultados:
+
+- 16 casos executados;
+- 7 bloqueados pelos guardrails (jailbreak, revelação de instruções, fora de escopo, especificação de produto sem base, segurança elétrica, aconselhamento jurídico e financeiro);
+- 9 casos permitidos com chamada ao modelo;
+- 9/9 structured outputs válidos como instância de `ConsultaRecarga`;
+- 0 erros;
+- memória validada em conversas de 3+ turnos: o histórico dos turnos anteriores é fornecido ao modelo no turno seguinte;
+- limite de histórico de 1000 tokens validado: históricos acima do limite são reduzidos por `trim_messages` sem mensagens parciais e iniciando em mensagem humana;
+- isolamento entre sessões validado: `session_a` e `session_b` não compartilham histórico.
+
+### Limitação conhecida
+
+A avaliação não garante eliminação de todas as alucinações técnicas. Quando o contexto fornecido não contém a base técnica necessária, o modelo ainda pode introduzir conhecimento técnico externo em algumas respostas.
 
 ---
 

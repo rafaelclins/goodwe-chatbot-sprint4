@@ -9,17 +9,17 @@ from dotenv import load_dotenv
 # Carrega variáveis do .env
 load_dotenv()
 
-# Lê API Key
-api_key = os.getenv("OPENROUTER_API_KEY")
+# Lê API Key do Ollama Cloud
+api_key = os.getenv("OLLAMA_API_KEY")
 
 # Verificação básica
 if not api_key:
     print("Erro: API Key não encontrada no arquivo .env")
     exit()
 
-# Cliente OpenRouter
+# Cliente Ollama Cloud
 client = OpenAI(
-    base_url="https://openrouter.ai/api/v1",
+    base_url="https://ollama.com/v1/",
     api_key=api_key
 )
 
@@ -75,7 +75,7 @@ while True:
 
         # Requisição para IA
         response = client.chat.completions.create(
-            model="meta-llama/llama-3-8b-instruct",
+            model="gpt-oss:120b",
 
             messages=messages,
 

@@ -1,2 +1,7 @@
 openai
 python-dotenv
+langchain
+langchain-core
+langchain-ollama
+pydantic>=2,<3
+tiktoken
