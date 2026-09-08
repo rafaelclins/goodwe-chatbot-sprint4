@@ -18,6 +18,7 @@ from src.schemas.consulta_recarga import ConsultaRecarga
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
 CASES_PATH = PROJECT_ROOT / "evals" / "sprint3_cases.json"
+RESULTS_PATH = PROJECT_ROOT / "evals" / "sprint3_results.json"
 
 VALID_JSON = (
 	'{"resposta":"Resposta fake para avaliação.",'
@@ -262,9 +263,41 @@ def run_cases(
 	return results
 
 
+def save_results(
+	results: list[dict[str, Any]],
+	path: Path = RESULTS_PATH,
+) -> Path:
+	payload = {
+		"summary": {
+			"total": len(results),
+			"passed": sum(1 for result in results if result["success"]),
+			"failed": sum(1 for result in results if not result["success"]),
+		},
+		"results": [
+			{
+				"id": result["id"],
+				"pergunta": result["input"],
+				"status": "permitido" if not result["blocked"] else "bloqueado",
+				"categoria": result["guardrail_result"]["category"],
+				"validacao_schema": result["structured_output_valid"],
+				"passou_criterio": result["success"],
+				"checks": result["checks"],
+			}
+			for result in results
+		],
+	}
+	path.write_text(
+		json.dumps(payload, ensure_ascii=False, indent=2),
+		encoding="utf-8",
+	)
+	return path
+
+
 def main() -> None:
 	results = run_cases()
+	saved_path = save_results(results)
 	print(json.dumps(results, ensure_ascii=False, indent=2))
+	print(f"\nResultados salvos em: {saved_path}")
 
 
 if __name__ == "__main__":

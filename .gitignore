@@ -2,3 +2,4 @@
 venv/
 .idea/
 __pycache__/
+evals/sprint3_results.json

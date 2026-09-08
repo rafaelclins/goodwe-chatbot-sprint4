@@ -1,6 +1,9 @@
+import json
+import tempfile
 import unittest
+from pathlib import Path
 
-from evals.run_sprint3 import FakeModel, load_cases, run_cases
+from evals.run_sprint3 import FakeModel, load_cases, run_cases, save_results
 
 
 class Sprint3ExecutorTest(unittest.TestCase):
@@ -156,6 +159,39 @@ class Sprint3ExecutorTest(unittest.TestCase):
 
 		self.assertEqual(results[0]["tokens"]["source"], "estimated")
 		self.assertGreater(results[0]["tokens"]["turn_tokens"], 0)
+
+	def test_save_results_writes_detailed_json(self):
+		with tempfile.TemporaryDirectory() as temp_dir:
+			path = Path(temp_dir) / "results.json"
+			saved = save_results(run_cases(load_cases()), path)
+
+			self.assertEqual(saved, path)
+			self.assertTrue(path.exists())
+
+			payload = json.loads(path.read_text(encoding="utf-8"))
+			self.assertEqual(payload["summary"]["total"], 16)
+			self.assertEqual(len(payload["results"]), 16)
+
+			for entry in payload["results"]:
+				for field in (
+					"id",
+					"pergunta",
+					"status",
+					"validacao_schema",
+					"passou_criterio",
+				):
+					self.assertIn(field, entry)
+
+			allowed = next(
+				entry for entry in payload["results"]
+				if entry["status"] == "permitido"
+			)
+			blocked = next(
+				entry for entry in payload["results"]
+				if entry["status"] == "bloqueado"
+			)
+			self.assertEqual(allowed["validacao_schema"], True)
+			self.assertEqual(blocked["validacao_schema"], False)
 
 
 if __name__ == "__main__":
