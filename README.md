@@ -52,6 +52,7 @@ Sprint 3:
 - Prompts versionados (`v1`, `v2`, `v2.1`, `v2.2`)
 - Medição de tokens de prompt com `tiktoken`
 - Avaliação automatizada com 16 casos de teste e fake model
+- Bônus: demonstração multi-provider (múltiplos modelos x versões de prompt, modo paralelo/alternado, com consolidação da melhor resposta)
 
 ---
 
@@ -88,7 +89,8 @@ goodwe-chatbot-sprint2/
 ├── src/
 │   ├── chain/
 │   │   ├── builder.py          # LCEL: prompt | modelo | parser
-│   │   └── memoria.py          # RunnableWithMessageHistory + trim_messages
+│   │   ├── memoria.py          # RunnableWithMessageHistory + trim_messages
+│   │   └── multi_provider.py   # Demo bônus: compara modelos x versões de prompt
 │   ├── guardrails/
 │   │   ├── moderation.py       # Detecção de prompt injection
 │   │   ├── scope_validator.py  # Validação de escopo temático
@@ -235,6 +237,32 @@ O benchmark executa 5 perguntas de `evals/sprint3_cases.json` em dois modelos
 (temperature=0.2, top_p=0.9, max_tokens=500) e reporta latência média, tokens
 de entrada/saída (tiktoken), acurácia no JSON do schema `ConsultaRecarga` e
 coerência no domínio. Resultados salvos em `evals/benchmark_modelos_results.json`.
+
+### Demonstração Multi-Provider (Bônus)
+
+A funcionalidade opcional `src/chain/multi_provider.py` consulta o mesmo domínio
+com mais de um modelo **e** mais de uma versão de system prompt (ex.: `gpt-oss:120b`
+e `gpt-oss:20b` com `v2.1` e `v2.2`), em modo **paralelo** ou **alternado**. Para
+cada combinação modelo x prompt, a resposta recebe um score 0-10 (validação no
+schema Pydantic `ConsultaRecarga` + fluência + vocabulário do domínio) e a
+demonstração devolve a melhor resposta consolidada junto da comparação completa.
+
+> Se `OLLAMA_API_KEY` estiver no `.env`, as chamadas usam o Ollama Cloud; sem a
+> chave, o script tenta o Ollama local. Qualquer modelo disponível pode ser
+> informado em `--models` (ex.: `gpt-oss:120b qwen3:8b`).
+
+```bash
+# Execução padrão (paralelo, 2 modelos x 2 prompts)
+python -m src.chain.multi_provider
+
+# Personalizado: modelos, versões de prompt, modo e salvar resultado em JSON
+python -m src.chain.multi_provider \
+  --question "Quanto custa carregar 40 kWh de 20% a 80%?" \
+  --models gpt-oss:120b gpt-oss:20b \
+  --prompts v2.1 v2.2 \
+  --mode paralelo \
+  --output evals/multi_provider_results.json
+```
 
 ---
 
