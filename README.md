@@ -24,7 +24,7 @@ O sistema foi desenvolvido como parte do Challenge FIAP + GoodWe 2026, evoluído
 O chatbot utiliza:
 - histórico de mensagens por sessão
 - system prompt especializado
-- integração com modelo de IA via Ollama Cloud
+- integração com modelo de IA via Ollama (local)
 - controle de contexto técnico
 - limite de histórico por tokens
 - guardrails de escopo e prompt injection
@@ -59,7 +59,7 @@ Sprint 3:
 
 - Python 3.12
 - LangChain / langchain-core / langchain-ollama
-- Ollama Cloud API
+- Ollama (local)
 - Modelo `gpt-oss:120b`
 - Pydantic v2
 - tiktoken
@@ -116,7 +116,7 @@ A cadeia principal é construída com LangChain Expression Language (LCEL):
 ChatPromptTemplate | ChatOllama | StrOutputParser
 ```
 
-Em `src/chain/builder.py`, o prompt é montado com `ChatPromptTemplate` usando o system prompt versionado (`prompts/system_prompt_v2.2.txt`), um `MessagesPlaceholder` para o histórico e a mensagem humana com as instruções de formato. O modelo é o `gpt-oss:120b` acessado via Ollama Cloud (`https://ollama.com/v1/`).
+Em `src/chain/builder.py`, o prompt é montado com `ChatPromptTemplate` usando o system prompt versionado (`prompts/system_prompt_v2.2.txt`), um `MessagesPlaceholder` para o histórico e a mensagem humana com as instruções de formato. O modelo é o `gpt-oss:120b` acessado via Ollama local.
 
 ### Memória
 
@@ -188,19 +188,25 @@ pip install -r requirements.txt
 
 ---
 
-## Configuração da API
+## Configuração
 
-Crie um arquivo `.env` na raiz do projeto:
+Garanta que o Ollama está instalado e rodando localmente:
 
-```env
-OLLAMA_API_KEY=sua_chave_aqui
+```bash
+ollama serve
+```
+
+Puxe o modelo necessário:
+
+```bash
+ollama pull gpt-oss:120b
 ```
 
 ---
 
 ## Execução
 
-Execute o chatbot CLI (Sprint 2) com:
+Execute o chatbot CLI com:
 
 ```bash
 python chatbot.py
@@ -286,9 +292,8 @@ As respostas são baseadas:
 
 ## Segurança
 
-- A API Key é armazenada via variável de ambiente
-- O arquivo `.env` não é enviado ao GitHub
-- O projeto utiliza `.gitignore` para proteger credenciais
+- O projeto utiliza `.gitignore` para proteger arquivos sensíveis
+- O Ollama roda localmente, sem necessidade de chaves de API externas
 
 ---
 
