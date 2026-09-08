@@ -224,6 +224,18 @@ Para executar a avaliação com fake model (sem chamadas reais ao modelo):
 python evals/run_sprint3.py
 ```
 
+Para executar o benchmark comparativo de modelos via Ollama Cloud (chamadas reais):
+
+```bash
+python scripts/benchmark_modelos.py
+```
+
+O benchmark executa 5 perguntas de `evals/sprint3_cases.json` em dois modelos
+(`gpt-oss:120b` e `gpt-oss:20b`) com hiperparâmetros fixos
+(temperature=0.2, top_p=0.9, max_tokens=500) e reporta latência média, tokens
+de entrada/saída (tiktoken), acurácia no JSON do schema `ConsultaRecarga` e
+coerência no domínio. Resultados salvos em `evals/benchmark_modelos_results.json`.
+
 ---
 
 ## Resultados da Avaliação (Sprint 3)

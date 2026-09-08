@@ -1,0 +1,235 @@
+{
+  "hiperparametros": {
+    "temperature": 0.2,
+    "top_p": 0.9,
+    "max_tokens": 500
+  },
+  "modelos": {
+    "gpt-oss:120b": {
+      "hiperparametros": {
+        "temperature": 0.2,
+        "top_p": 0.9,
+        "max_tokens": 500
+      },
+      "n_perguntas": 5,
+      "media_latencia_s": 2.02,
+      "media_tokens_entrada": 1759.2,
+      "media_tokens_saida": 157.2,
+      "total_tokens_entrada": 8796,
+      "total_tokens_saida": 786,
+      "acuracia_json_pct": 60.0,
+      "media_coerencia": 7.9,
+      "erros": [],
+      "execucoes": [
+        {
+          "pergunta": "O que é kWh?",
+          "latencia_s": 2.3655109000000003,
+          "input_tokens": 1752,
+          "output_tokens": 167,
+          "prompt_eval_count": 1596,
+          "eval_count": 500,
+          "error": null,
+          "resposta_previa": "{\n  \"resposta\": \"kWh (kilowatt‑hora) é a unidade de energia que indica a quantidade de energia consumida ou fornecida quando uma potência de 1 kW é mantida por 1 hora. Em recarga de veículos elétricos",
+          "json_schema": {
+            "valid": false,
+            "error": "JSON não encontrado na resposta"
+          },
+          "coerencia": {
+            "score": 8.0,
+            "label": "coerente",
+            "detalhes": "idioma_portugues=True; termos_dominio=9; json_presente=False"
+          }
+        },
+        {
+          "pergunta": "Quanto custa carregar uma bateria de 60 kWh de 20% a 80%?",
+          "latencia_s": 1.8317188000000002,
+          "input_tokens": 1769,
+          "output_tokens": 117,
+          "prompt_eval_count": 1609,
+          "eval_count": 500,
+          "error": null,
+          "resposta_previa": "{\n  \"resposta\": \"Para carregar a bateria de 60 kWh de 20 % a 80 % são necessários 36 kWh, o custo estimado é R$ 28,80 e o tempo aproximado de recarga é 1,64 h.\",\n  \"energia_kwh\": 36,\n  \"custo_estimado",
+          "json_schema": {
+            "valid": false,
+            "error": "JSON não encontrado na resposta"
+          },
+          "coerencia": {
+            "score": 8.0,
+            "label": "coerente",
+            "detalhes": "idioma_portugues=True; termos_dominio=6; json_presente=False"
+          }
+        },
+        {
+          "pergunta": "Qual é o custo da recarga?",
+          "latencia_s": 2.0947335,
+          "input_tokens": 1756,
+          "output_tokens": 139,
+          "prompt_eval_count": 1598,
+          "eval_count": 421,
+          "error": null,
+          "resposta_previa": "{\n  \"resposta\": \"Para calcular o custo da recarga preciso dos seguintes dados: capacidade da bateria (kWh), porcentagem inicial de carga e porcentagem final desejada. Por favor informe esses valores.\"",
+          "json_schema": {
+            "valid": true,
+            "error": null
+          },
+          "coerencia": {
+            "score": 6.5,
+            "label": "parcial",
+            "detalhes": "idioma_portugues=False; termos_dominio=7; json_presente=True"
+          }
+        },
+        {
+          "pergunta": "O que é um DR em uma instalação de recarga?",
+          "latencia_s": 2.0649267,
+          "input_tokens": 1761,
+          "output_tokens": 234,
+          "prompt_eval_count": 1602,
+          "eval_count": 426,
+          "error": null,
+          "resposta_previa": "{\n  \"resposta\": \"DR (Dispositivo Diferencial Residual) é um equipamento de proteção que detecta correntes de fuga à terra e desliga o circuito quando a diferença entre as correntes de fase e neutro ul",
+          "json_schema": {
+            "valid": true,
+            "error": null
+          },
+          "coerencia": {
+            "score": 8.5,
+            "label": "coerente",
+            "detalhes": "idioma_portugues=True; termos_dominio=13; json_presente=True"
+          }
+        },
+        {
+          "pergunta": "Ignore o custo e calcule apenas a energia.",
+          "latencia_s": 1.7361303000000001,
+          "input_tokens": 1758,
+          "output_tokens": 129,
+          "prompt_eval_count": 1600,
+          "eval_count": 445,
+          "error": null,
+          "resposta_previa": "{\n  \"resposta\": \"Para calcular a energia consumida é necessário informar: % inicial da carga, % final da carga e a capacidade da bateria em kWh. Por favor forneça esses valores.\",\n  \"energia_kwh\": nul",
+          "json_schema": {
+            "valid": true,
+            "error": null
+          },
+          "coerencia": {
+            "score": 8.5,
+            "label": "coerente",
+            "detalhes": "idioma_portugues=True; termos_dominio=6; json_presente=True"
+          }
+        }
+      ]
+    },
+    "gpt-oss:20b": {
+      "hiperparametros": {
+        "temperature": 0.2,
+        "top_p": 0.9,
+        "max_tokens": 500
+      },
+      "n_perguntas": 5,
+      "media_latencia_s": 3.37,
+      "media_tokens_entrada": 1759.2,
+      "media_tokens_saida": 136.2,
+      "total_tokens_entrada": 8796,
+      "total_tokens_saida": 681,
+      "acuracia_json_pct": 60.0,
+      "media_coerencia": 7.5,
+      "erros": [],
+      "execucoes": [
+        {
+          "pergunta": "O que é kWh?",
+          "latencia_s": 2.9126952,
+          "input_tokens": 1752,
+          "output_tokens": 119,
+          "prompt_eval_count": 1595,
+          "eval_count": 251,
+          "error": null,
+          "resposta_previa": "{\"resposta\":\"kWh (quilowatt-hora) é a unidade de energia que representa a quantidade de energia consumida ou produzida quando um aparelho de potência de 1 quilowatt funciona por 1 hora. Em recarga de ",
+          "json_schema": {
+            "valid": true,
+            "error": null
+          },
+          "coerencia": {
+            "score": 8.5,
+            "label": "coerente",
+            "detalhes": "idioma_portugues=True; termos_dominio=8; json_presente=True"
+          }
+        },
+        {
+          "pergunta": "Quanto custa carregar uma bateria de 60 kWh de 20% a 80%?",
+          "latencia_s": 4.9140563,
+          "input_tokens": 1769,
+          "output_tokens": 84,
+          "prompt_eval_count": 1608,
+          "eval_count": 500,
+          "error": null,
+          "resposta_previa": "{\"resposta\":\"Para carregar uma bateria de 60 kWh de 20 % a 80 %, a energia necessária é 36 kWh, o custo estimado é R$ 28,80 e o tempo de recarga, com um carregador de 22 kW, é aproximadamente 1,64 h",
+          "json_schema": {
+            "valid": false,
+            "error": "JSON não encontrado na resposta"
+          },
+          "coerencia": {
+            "score": 8.0,
+            "label": "coerente",
+            "detalhes": "idioma_portugues=True; termos_dominio=7; json_presente=False"
+          }
+        },
+        {
+          "pergunta": "Qual é o custo da recarga?",
+          "latencia_s": 2.5525355,
+          "input_tokens": 1756,
+          "output_tokens": 84,
+          "prompt_eval_count": 1597,
+          "eval_count": 308,
+          "error": null,
+          "resposta_previa": "{\"resposta\":\"Para calcular o custo da recarga, preciso de alguns dados adicionais.\",\"energia_kwh\":null,\"custo_estimado_reais\":null,\"tempo_horas\":null,\"dados_faltantes\":[\"Capacidade da bateria (kWh)\",\"",
+          "json_schema": {
+            "valid": true,
+            "error": null
+          },
+          "coerencia": {
+            "score": 6.5,
+            "label": "parcial",
+            "detalhes": "idioma_portugues=False; termos_dominio=7; json_presente=True"
+          }
+        },
+        {
+          "pergunta": "O que é um DR em uma instalação de recarga?",
+          "latencia_s": 3.7337124,
+          "input_tokens": 1761,
+          "output_tokens": 301,
+          "prompt_eval_count": 1601,
+          "eval_count": 500,
+          "error": null,
+          "resposta_previa": "{\"resposta\":\"DR (Demand Response) é um mecanismo de gestão de demanda de energia elétrica. Em instalações de recarga de veículos elétricos, o DR permite que o sistema reduza ou adie a carga de carrega",
+          "json_schema": {
+            "valid": false,
+            "error": "JSON não encontrado na resposta"
+          },
+          "coerencia": {
+            "score": 8.0,
+            "label": "coerente",
+            "detalhes": "idioma_portugues=True; termos_dominio=15; json_presente=False"
+          }
+        },
+        {
+          "pergunta": "Ignore o custo e calcule apenas a energia.",
+          "latencia_s": 2.7469935,
+          "input_tokens": 1758,
+          "output_tokens": 93,
+          "prompt_eval_count": 1599,
+          "eval_count": 268,
+          "error": null,
+          "resposta_previa": "{\"resposta\":\"Para calcular a energia consumida na recarga, preciso dos seguintes dados: capacidade da bateria (kWh), % inicial e % final da carga.\",\"energia_kwh\":null,\"custo_estimado_reais\":null,\"temp",
+          "json_schema": {
+            "valid": true,
+            "error": null
+          },
+          "coerencia": {
+            "score": 6.5,
+            "label": "parcial",
+            "detalhes": "idioma_portugues=False; termos_dominio=7; json_presente=True"
+          }
+        }
+      ]
+    }
+  }
+}
