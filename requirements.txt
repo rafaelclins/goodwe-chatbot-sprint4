@@ -5,3 +5,4 @@ langchain-core
 langchain-ollama
 pydantic>=2,<3
 tiktoken
+reportlab>=4,<6
