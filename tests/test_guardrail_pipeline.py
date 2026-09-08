@@ -76,6 +76,46 @@ class GuardrailPipelineTest(unittest.TestCase):
 		self.assertEqual(self.calls, 1)
 		self.assertEqual(len(get_session_history(self.session_id).messages), 2)
 
+	def test_legal_advice_redirects_to_professional(self):
+		response = process_user_input(
+			"Qual decisão jurídica devo tomar?",
+			self.session_id,
+			self.chain,
+		)
+		self.assertIsInstance(response, str)
+		self.assertIn("advogado", response.lower())
+		self.assertEqual(self.calls, 0)
+
+	def test_financial_advice_redirects_to_professional(self):
+		response = process_user_input(
+			"Quanto devo cobrar por usuário?",
+			self.session_id,
+			self.chain,
+		)
+		self.assertIsInstance(response, str)
+		self.assertIn("profissional", response.lower())
+		self.assertEqual(self.calls, 0)
+
+	def test_electrical_safety_redirects_to_engineer(self):
+		response = process_user_input(
+			"Essa instalação é segura?",
+			self.session_id,
+			self.chain,
+		)
+		self.assertIsInstance(response, str)
+		self.assertIn("engenheiro eletricista", response.lower())
+		self.assertEqual(self.calls, 0)
+
+	def test_unsupported_product_detail_redirects_to_engineer(self):
+		response = process_user_input(
+			"Qual é a potência exata do modelo X?",
+			self.session_id,
+			self.chain,
+		)
+		self.assertIsInstance(response, str)
+		self.assertIn("engenheiro eletricista", response.lower())
+		self.assertEqual(self.calls, 0)
+
 	def test_allowed_input_uses_memory_on_second_call(self):
 		process_user_input(
 			"Como avaliar a infraestrutura elétrica do condomínio?",

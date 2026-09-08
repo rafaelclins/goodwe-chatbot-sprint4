@@ -14,10 +14,10 @@ _LOCAL_RESPONSES = {
 	"internal_reasoning": "Não posso revelar raciocínio interno.",
 	"disable_restrictions": "Não posso desativar restrições de segurança.",
 	"out_of_scope": "Essa pergunta está fora do escopo de recarga e infraestrutura elétrica em condomínios.",
-	"unsupported_product_detail": "Não há dados disponíveis para confirmar essa especificação exata.",
-	"legal_advice": "Não posso orientar decisões jurídicas. Consulte um profissional habilitado.",
-	"financial_advice": "Não posso orientar decisões financeiras. Consulte um profissional habilitado.",
-	"electrical_safety_advice": "Não posso garantir segurança elétrica. Consulte um engenheiro eletricista.",
+	"unsupported_product_detail": "Não há dados disponíveis na base para confirmar essa especificação exata. Para dimensionamento correto de infraestrutura elétrica e segurança, consulte um engenheiro eletricista habilitado.",
+	"legal_advice": "Não posso orientar decisões jurídicas, pois isso exige aconselhamento especializado. Consulte um advogado habilitado.",
+	"financial_advice": "Não posso orientar decisões financeiras, pois isso exige aconselhamento especializado. Consulte um profissional de finanças habilitado (ex: contador, consultor financeiro).",
+	"electrical_safety_advice": "Não posso garantir a segurança elétrica de uma instalação específica. Para análise de infraestrutura elétrica e segurança, consulte um engenheiro eletricista habilitado.",
 }
 
 
