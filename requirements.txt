@@ -1,4 +1,4 @@
-openai
+ollama
 python-dotenv
 langchain
 langchain-core

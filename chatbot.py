@@ -1,27 +1,10 @@
-import os
-from openai import OpenAI
-from dotenv import load_dotenv
+import ollama
 
 # =========================
 # CONFIGURAÇÃO INICIAL
 # =========================
 
-# Carrega variáveis do .env
-load_dotenv()
-
-# Lê API Key do Ollama Cloud
-api_key = os.getenv("OLLAMA_API_KEY")
-
-# Verificação básica
-if not api_key:
-    print("Erro: API Key não encontrada no arquivo .env")
-    exit()
-
-# Cliente Ollama Cloud
-client = OpenAI(
-    base_url="https://ollama.com/v1/",
-    api_key=api_key
-)
+client = ollama.Client()
 
 # =========================
 # SYSTEM PROMPT
@@ -74,16 +57,14 @@ while True:
     try:
 
         # Requisição para IA
-        response = client.chat.completions.create(
+        response = client.chat(
             model="gpt-oss:120b",
-
             messages=messages,
-
-            temperature=0.3
+            options={"temperature": 0.3}
         )
 
         # Resposta da IA
-        assistant_response = response.choices[0].message.content
+        assistant_response = response["message"]["content"]
 
         # Exibe resposta
         print(f"\nChatbot: {assistant_response}\n")
