@@ -30,6 +30,34 @@ class StructuredOutputTest(unittest.TestCase):
         with self.assertRaises(ValidationError):
             ConsultaRecarga(resposta="   ")
 
+    def test_energy_validator_rejects_non_positive_values(self):
+        for value in (0, -5):
+            with self.subTest(value=value):
+                with self.assertRaises(ValidationError):
+                    ConsultaRecarga(resposta="ok", energia_kwh=value)
+
+    def test_energy_validator_rejects_unrealistic_values(self):
+        for value in (0.001, 5000):
+            with self.subTest(value=value):
+                with self.assertRaises(ValidationError):
+                    ConsultaRecarga(resposta="ok", energia_kwh=value)
+
+    def test_time_validator_rejects_invalid_values(self):
+        for value in (0, -1, 500):
+            with self.subTest(value=value):
+                with self.assertRaises(ValidationError):
+                    ConsultaRecarga(resposta="ok", tempo_horas=value)
+
+    def test_validators_accept_reasonable_values(self):
+        consulta = ConsultaRecarga(
+            resposta="ok",
+            energia_kwh=60,
+            tempo_horas=2.7,
+            custo_estimado_reais=48.0,
+        )
+        self.assertEqual(consulta.energia_kwh, 60)
+        self.assertEqual(consulta.tempo_horas, 2.7)
+
     def test_structured_memory_chain_preserves_schema_type(self):
         model = RunnableLambda(lambda _: VALID_JSON)
         chain = build_structured_memory_chain(
