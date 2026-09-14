@@ -60,7 +60,7 @@ Sprint 3:
 
 - Python 3.12
 - LangChain / langchain-core / langchain-ollama
-- Ollama (local)
+- Ollama
 - Modelo `gpt-oss:120b`
 - Pydantic v2
 - tiktoken
