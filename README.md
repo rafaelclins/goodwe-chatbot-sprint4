@@ -71,7 +71,7 @@ Sprint 3:
 ## Estrutura do Projeto
 
 ```text
-goodwe-chatbot-sprint2/
+goodwe-chatbot-sprint3/
 │
 ├── chatbot.py                  # Chatbot CLI (Sprint 2)
 ├── README.md
