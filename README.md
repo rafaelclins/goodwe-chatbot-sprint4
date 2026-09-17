@@ -8,7 +8,7 @@ Chatbot técnico desenvolvido para auxiliar em questões relacionadas à recarga
 
 - Rafael Lins — RM: 570588
 - Rafael Gandolfi — RM: 569036
-- Carlos Tavares — RM: 592949
+- Carlos Tavares — RM: 572949
 - Cauã Paes — RM: 569906
 - Guilherme Miranda — RM: 573107
 - João Pedro Soler — RM: 569725
