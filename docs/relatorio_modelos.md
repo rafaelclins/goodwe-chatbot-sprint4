@@ -1,152 +1,234 @@
-# Relatório de Avaliação e Comparativo de Modelos — Sprint 3
+# Relatório de modelos — RAG com grounding
 
-Documento técnico com os resultados comparativos obtidos pela execução do script
-[`scripts/benchmark_modelos.py`](../scripts/benchmark_modelos.py), que submete as
-mesmas 5 perguntas do conjunto [`evals/sprint3_cases.json`](../evals/sprint3_cases.json)
-a dois modelos generativos via Ollama Cloud / LangChain e mede latência, consumo de
-tokens, aderência ao schema Pydantic v2 `ConsultaRecarga` e coerência no domínio GoodWe.
+Comparação de modelos de chat no pipeline RAG da Sprint 4, medidos pelo mesmo
+prompt (v3.1), pelos mesmos casos (`evals/rag_cases.json`) e com os mesmos
+parâmetros de geração.
 
-Metodologia resumida:
+Os dados vêm de duas fontes, ambas nesta pasta:
 
-- **Perguntas avaliadas**: conceito de kWh, cálculo de custo de recarga, pedido de dados
-  ausentes, conceito de DR e caso de exceção de guardrail (uso natural de "ignore").
-- **Provider**: Ollama Cloud (`https://ollama.com/api/chat`), autenticado via `OLLAMA_API_KEY`.
-- **Integração**: `langchain-ollama` (`ChatOllama`).
-- **Medição de tokens**: `tiktoken` (encoding `cl100k_base`).
-- **Schema de saída**: Pydantic v2 — `src/schemas/consulta_recarga.py` (`ConsultaRecarga`).
-- **Arquivo de dados brutos**: [`evals/benchmark_modelos_results.json`](../evals/benchmark_modelos_results.json).
+- **`../evals/iteration_*.json`** — notas de *faithfulness* e *answer relevancy*
+  do RAGAS, com `gpt-oss:120b-cloud` como judge.
+- **`benchmark_modelos.json`** — latência e taxa de citação, medidos por
+  `scripts/benchmark_modelos.py` sobre o pipeline real.
+
+Nenhum número deste documento foi estimado. Onde não houve medição, o campo está
+marcado como **TODO** com a instrução de preenchimento.
 
 ---
 
-## 1. Configuração dos Modelos e Hiperparâmetros
+## Modelos comparados
 
-Os hiperparâmetros de geração foram fixados e registrados explicitamente no script,
-garantindo comparabilidade entre os modelos:
-
-| Modelo | Provider | Temperature | Top_P | Max Tokens |
-|---|---|---|---|---|
-| `gpt-oss:120b` | Ollama Cloud | 0.2 | 0.9 | 500 |
-| `gpt-oss:20b` | Ollama Cloud | 0.2 | 0.9 | 500 |
-
-Notas:
-
-- Ambos pertencem à família **GPT-OSS** (modelos abertos), o que isola o efeito do tamanho
-  (120B vs 20B de parâmetros) mantendo a mesma arquitetura e tokenização de prompt.
-- `max_tokens=500` foi mapeado para o parâmetro `num_predict` da API Ollama.
-- Os modelos da família `gpt-oss` executam um bloco de *chain-of-thought* internamente
-  antes de emitir a resposta visível; esse "consumo adicional" interfere diretamente no
-  limite de tokens, como discutido na seção 3.
-
----
-
-## 2. Resultados do Benchmark Comparativo
-
-Valores médios sobre 5 perguntas executadas no mesmo conjunto de casos:
-
-| Métrica | `gpt-oss:120b` | `gpt-oss:20b` |
+| Modelo | Onde roda | Acesso |
 |---|---|---|
-| Latência média (segundos) | **2.02 s** | 3.37 s |
-| Tokens médios de prompt (entrada) | 1 759.2 | 1 759.2 |
-| Tokens médios de completion (saída) | **157.2** | 136.2 |
-| Taxa de sucesso no structured output (Pydantic v2) | **60%** (3/5) | **60%** (3/5) |
-| Qualidade/aderência ao contexto técnico GoodWe (0–10) | **7.9** | 7.5 |
+| `gemma4:cloud` | Ollama Cloud | sufixo `-cloud` no servidor local autenticado |
+| `gpt-oss:120b` | Ollama Cloud | sufixo `-cloud` no servidor local autenticado |
+| `gpt-oss:20b` | Ollama Cloud | sufixo `-cloud` no servidor local autenticado |
 
-Detalhamento por pergunta:
+> **Sobre o nome.** `gpt-oss:120b` **não** é o identificador aceito por um
+> servidor local autenticado: é preciso `gpt-oss:120b-cloud`. O nome sem
+> sufixo é o identificador da API direta (`https://ollama.com/api/tags`, ex.
+> `gemma4:31b`). A verificação de `evals/run_rag_eval.py` foi corrigida para
+> sondar `/api/show` em vez de consultar `/api/tags`, porque a lista de tags do
+> servidor local não contém os modelos de nuvem até o primeiro uso bem-sucedido —
+> nela, `gpt-oss:120b-cloud` responderia "modelo indisponível" mesmo
+> funcionando.
 
-| Pergunta | `gpt-oss:120b` | `gpt-oss:20b` |
+---
+
+## Parâmetros de geração
+
+Valores lidos do payload que `ChatOllama` realmente envia, extraído de
+`_chat_params()` em `langchain-ollama` (versão instalada junto ao projeto):
+
+```python
+{"keep_alive": null, "logprobs": null, "model": "<modelo>",
+ "options": {"temperature": 0.0}, "think": null, "top_logprobs": null}
+```
+
+| Parâmetro | Valor enviado | Quem define |
 |---|---|---|
-| O que é kWh? | JSON: ✗ (truncado) · coerência 8.0 | JSON: ✓ · coerência 8.5 |
-| Quanto custa carregar uma bateria de 60 kWh de 20% a 80%? | JSON: ✗ (truncado) · coerência 8.0 | JSON: ✗ (truncado) · coerência 8.0 |
-| Qual é o custo da recarga? (dados ausentes) | JSON: ✓ · coerência 6.5 | JSON: ✓ · coerência 6.5 |
-| O que é um DR em uma instalação de recarga? | JSON: ✓ · coerência 8.5 | JSON: ✗ · **resposta tecnicamente incorreta** (8.0) |
-| Ignore o custo e calcule apenas a energia. | JSON: ✓ · coerência 8.5 | JSON: ✓ · coerência 6.5 |
+| `temperature` | **0.0** | `src/rag/prompt_rag.py` → `ChatOllama(temperature=0)` |
+| `top_k` | **ausente** | não é enviado; o Ollama aplica o default do modelo |
+| `top_p` | **ausente** | idem |
+| `num_predict` (`max_tokens`) | **ausente** | idem — sem teto de tamanho de resposta |
+| `num_ctx` | ausente | default do modelo |
+| `seed` | ausente | sem fixação de semente |
+| `think` | ausente | o servidor decide |
 
-Observações importantes sobre os dados reais:
+Os três modelos recebem **exatamente o mesmo payload**. Não há tabela por modelo
+nesta seção porque a implementação não diferencia os modelos: `build_rag_chain()`
+constrói o `ChatOllama` da mesma forma para qualquer nome.
 
-1. **Os 4 JSONs "inválidos" ocorreram por truncamento** — o `eval_count` atingiu 500
-   tokens (o limite `max_tokens`) antes de o modelo fechar o bloco JSON, porque os
-   modelos `gpt-oss` consomem parte do orçamento com o raciocínio interno. O conteúdo
-   gerado inicia o JSON corretamente, mas é cortado no meio.
-2. **Erro técnico de domínio no `gpt-oss:20b`**: na pergunta sobre DR, o modelo de 20B
-   respondeu "DR (Demand Response)", definição genérica de gestão de demanda, incorreta
-   no contexto de instalação elétrica brasileira — onde DR é **Dispositivo Diferencial
-   Residual**. O modelo de 120B respondeu corretamente.
-3. **Nenhum dos modelos retornou JSON válido para o cálculo completo** dentro do limite
-   de 500 tokens: ambos acertaram os números (36 kWh, R$ 28,80, ~1,64 h), mas não
-   concluíram o JSON estruturado.
+### Por que `temperature=0`
 
----
+`temperature=0` torna a geração determinística, e sem isso qualquer diferença de
+score entre duas iterações de prompt vira ruído de amostragem em vez de evidência
+de que o prompt mudou alguma coisa.
 
-## 3. Análise Crítica e Trade-offs
+O custo: a família Gemma recomenda `temperature=1.0`, `top_p=0.95`,
+`top_k=64` para seus melhores resultados. O projeto usa `0` em todos os modelos por uniformizar essa variável — comparar
+modelos com temperaturas diferentes mediria a temperatura, não o modelo. **É um
+desvio consciente do recomendado, e vale reavaliar se a qualidade importa mais
+que a comparabilidade.**
 
-### `gpt-oss:120b` (Modelo A)
+### `num_predict` ausente tem consequência
 
-Vantagens:
-
-- **Menor latência média** (2.02 s vs 3.37 s) — na infraestrutura da Ollama Cloud o
-  modelo maior obteve maior throughput por requisição nesta amostragem.
-- **Melhor aderência técnica**: definição correta de DR, conceitos de kWh e cálculo de
-  energia precisos.
-- **Maior coerência no domínio** (7.9 vs 7.5); respostas mais completas em formato de
-  JSON bem iniciado.
-
-Desvantagens:
-
-- **Custo de inferência maior** por token (modelo 6x maior) — maior poder computacional
-  na nuvem e maior latência em ambientes locais sem capacidade para o modelo completo.
-- Consome mais tokens de completion (157 vs 136), agravado pelo bloco de raciocínio interno.
-
-### `gpt-oss:20b` (Modelo B)
-
-Vantagens:
-
-- **Menor tamanho e custo de infraestrutura**: viável para execução em máquinas locais
-  com menos VRAM/RAM — a solução ficaria independente do custo de nuvem.
-- Produziu JSON válido na pergunta conceitual (kWh) em que o 120B truncou.
-
-Desvantagens:
-
-- **Maior latência na Ollama Cloud** (3.37 s) na amostra medida.
-- **Falha técnica de domínio**: resposta incorreta para DR (Demand Response).
-- Menor média de coerência técnica (7.5).
-
-### Trade-off central
-
-- **Velocidade/custo**: o 20B é mais barato e portátil, mas na nuvem foi mais lento e
-  tecnicamente menos confiável. O 120B entrega melhor precisão e latência na nuvem ao
-  custo de maior demanda computacional/inferência.
-- **Robustez do structured output**: ambos ficaram em 60% por causa do *limite de
-  `max_tokens`* insuficiente para acomodar o raciocínio interno + JSON. Esse é um
-  problema de configuração — não de capacidade do modelo — e é corrigível aumentando
-  `num_predict` ou desativando/suprimindo o thinking quando possível.
+Sem `num_predict`, o modelo pode gerar até o limite do contexto. Nenhum caso
+deste conjunto atingiu esse limite, mas numa base maior um turno sem teto de
+saída pode gerar centenas de tokens de recusa repetitiva.
 
 ---
 
-## 4. Conclusão e Modelo Escolhido para Produção
+## Resultados
 
-**Modelo escolhido para produção: `gpt-oss:120b`.**
+### Qualidade (RAGAS, judge `gpt-oss:120b-cloud`, prompt v3.1, n=9)
 
-Justificativa técnica:
+| Modelo | Iteração | Faithfulness | Answer relevancy | Citações | Citação válida |
+|---|---|---:|---:|---:|---:|
+| `gemma4:cloud` | `iteration_2.json` | 0,5852 | 0,5657 | 12 | 100% |
+| `gpt-oss:120b-cloud` | `iteration_3.json` | 0,5648 | 0,5142 | 12 | 100% |
+| `gpt-oss:20b-cloud` | `iteration_4.json` | 0,5926 | 0,4878 | 7 | 100% |
 
-1. **Precisão técnica superior**: o único erro conceitual significativo da avaliação
-   (DR = "Demand Response") veio do modelo de 20B. Em um chatbot técnico de
-   infraestrutura elétrica, erros dessa natureza são críticos e podem induzir o usuário
-   a decisões inseguras — esse fator pesa mais que qualquer diferença de custo.
-2. **Melhor latência na nuvem**: apesar de 6x maior, apresentou a menor latência média
-   (2.02 s), tornando-se a opção mais responsiva no provider adotado.
-3. **Maior coerência no domínio GoodWe** (7.9/10 vs 7.5/10), alinhada ao foco do projeto
-   (recarga de veículos elétricos em condomínios).
-4. **Aderência consistente ao schema** (60% = mesma taxa) com JSONs bem estruturados;
-   as falhas são de truncamento, mitigáveis em configuração.
+### Latência e comportamento (`benchmark_modelos.json`, 6 perguntas, 1x cada)
 
-Recomendações técnicas para produção:
+| Modelo | Latência média | Mediana | Mín | Máx | Com citação | Recusou |
+|---|---:|---:|---:|---:|---:|---:|
+| `gemma4:cloud` | **9,30s** | 9,29s | 8,72s | 9,90s | 100% | 0% |
+| `gpt-oss:120b-cloud` | 11,39s | 11,14s | 9,97s | 14,25s | 100% | 0% |
+| `gpt-oss:20b-cloud` | 14,12s | 13,32s | 12,19s | 17,65s | 83% | 0% |
 
-- **Aumentar `max_tokens`** (ex.: 800–1000) ou restringir o raciocínio interno do modelo,
-  para que o JSON estruturado seja sempre finalizado dentro do orçamento de tokens.
-- **Adotar `format=json`** na API Ollama em produção para garantir saída JSON válida,
-  elevando a taxa de sucesso do structured output de 60% para próximo de 100%.
-- **Manter os guardrails de escopo e segurança** ativos: a 120B reduz — mas não elimina —
-  o risco de alucinação técnica em tópicos fora da base.
-- O `gpt-oss:20b` permanece como **fallback de baixo custo** (ex.: ambiente local,
-  capacidade reduzida), desde que a pergunta sobre DR/componentes de proteção seja
-  tratada com cuidado adicional.
+Latência é do `responder()` completo, **incluindo a busca vetorial** — que é o
+que o usuário espera. O spread de um mesmo modelo (9,97s a 14,25s no
+`gpt-oss:120b`) mostra que, nesta amostra, a rede da nuvem vale mais que a
+diferença entre os modelos.
+
+---
+
+## Leitura
+
+**`gemma4:cloud` é a escolha hoje**, por duas razões que os dados apoiam:
+
+1. **É o mais rápido** (9,30s contra 11,39s e 14,12s) e tem o menor spread
+   (8,72s–9,90s; o `gpt-oss:120b` variou de 9,97s a 14,25s **no mesmo modelo**).
+2. **Tem a melhor *answer relevancy*** (0,5657 contra 0,5142 e 0,4878), a métrica
+   que mais distingue os três — e é a que penaliza a recusa indevida.
+
+**O que os dados não sustentam:**
+
+- **"`gemma4:cloud` tem o melhor *faithfulness*."** Não tem. O
+  `gpt-oss:20b-cloud` ficou **acima**, em 0,5926 contra 0,5852. A diferença
+  (0,007) é pequena demais para sustentar ordenação, mas a afirmação de que o
+  `gemma4` leader não é verdadeira.
+
+- **"Cita mais que os outros."** Não. O `gemma4:cloud` e o `gpt-oss:120b-cloud`
+  emitiram **12 citações cada**; o `gpt-oss:20b-cloud` emitiu 7. A diferença real
+  é do `20b`, que deixou **1 das 6** respostas do benchmark sem citação alguma.
+
+- **"O argumento decisivo é o número de parâmetros."** Removido: este relatório
+  **não mediu** o tamanho dos modelos, e afirmar "um terço dos parâmetros" sem
+  medição seria inventar o dado que a tarefa pediu para não inventar. Ver o TODO
+  de custo por token abaixo.
+
+**As três ressalvas que impedem uma recomendação firme:**
+
+1. **O `gpt-oss:120b` foi julgado por si mesmo** em `iteration_3.json`. Modelo
+   que se autoavalia tende a pontuar mais alto, e ainda assim ficou abaixo do
+   `gemma4` em ambas as métricas. Isso é um indício a favor do `gemma4`, não uma
+   prova.
+
+2. **Uma execução por modelo.** As três médias vêm de uma rodada. A diferença
+   entre 0,5852 e 0,5926 (0,007) é menor que a variação entre execuções do mesmo
+   modelo que o spread de latência sugere.
+
+3. **O benchmark tem 6 perguntas e 1 repetição** — não é amostra suficiente para
+   taxa de citação. O `83%` do `gpt-oss:20b` é **1 resposta de 6**.
+
+---
+
+## Conclusão
+
+Com os dados medidos: **`gemma4:cloud` é o mais rápido** (9,30s, ~18% abaixo do
+`gpt-oss:120b`) **e tem o melhor *answer relevancy***, com *faithfulness*
+ estatisticamente empatado com o `gpt-oss:20b` (0,5852 × 0,5926).
+
+A diferença de qualidade é pequena e não está dentro do ruído de uma execução
+única. A de latência (2,1s por turno) é perceptível mas não decisiva sozinha.
+
+**Recomendação provisória:** `gemma4:cloud`, por ser o mais rápido sem ceder
+qualidade mensurável. **Não é uma conclusão firme** — depende dos quatro itens
+de TODO abaixo, em particular de um judge que não seja um dos candidatos.
+
+### TODO — pendências de medição
+
+Estes campos ficaram sem medição e **não** foram preenchidos por estimativa:
+
+- [ ] **Custo por turno em tokens (cloud).** As iterações aqui rodaram com o
+      Ollama Cloud autenticado no servidor local; a cobrança aparece em
+      <https://ollama.com/settings/usage>. Para comparar custo:
+      ```bash
+      python -c "import sys; sys.path.insert(0,'.'); \
+        from src.rag.retriever import buscar_com_scores; \
+        print(sum(len(d.page_content) for d,_ in buscar_com_scores('O que e kWh?')))"
+      ```
+      Some os tokens de entrada (system prompt + contexto + pergunta) com o
+      tamanho da resposta, e multiplique pelo preço do modelo. Anote a data: o
+      preço por 1M de tokens varia.
+
+- [ ] **Qualidade com judge independente de todos os modelos.** As três linhas da
+      tabela de qualidade usam `gpt-oss:120b-cloud` como judge, e uma delas o
+      avalia como candidato. Rodar com um quarto modelo como judge eliminaria a
+      dependência:
+      ```bash
+      python evals/run_rag_eval.py --rag-model gemma4:cloud \
+          --judge-model <modelo-avaliado-em-nenhuma-outra-rodada> \
+          --output evals/iteration_5.json
+      ```
+
+- [ ] **Repetições.** Repetir cada combinação 3× e reportar média e desvio:
+      ```bash
+      PROMPT_RAG_VERSION=3.1 python evals/run_rag_eval.py --rag-model gemma4:cloud \
+          --judge-model gpt-oss:120b-cloud --output evals/iter_1_gemma_run1.json
+      # ... run2, run3
+      python scripts/benchmark_modelos.py --modelos gemma4:cloud --repeticoes 3
+      ```
+
+- [ ] **Comportamento local (`llama3`, 8B, CPU).** Medido nesta máquina apenas
+      para comparação de velocidade: **2,4 tok/s**, 30s de carregamento, contra
+      9,9 tok/s do `qwen3.5:0.8b` e rede do `gemma4:cloud`. Com 7,9 GB de RAM e
+      sem GPU, é inviável para o RAG. Registrado aqui porque é o modelo padrão
+      quando `PROMPT_RAG_VERSION` não está em modelo de nuvem, e o número
+      justifica não usá-lo nos evals.
+
+---
+
+## Ambiente das medições
+
+| Componente | Versão |
+|---|---|
+| Python | 3.12 |
+| `langchain-core` | 1.6.2 |
+| `langchain` | 1.4.0 |
+| `ragas` | 0.4.3 |
+| Modelo de embeddings | `nomic-embed-text` (local, `data/chroma_db`) |
+| Judge | `gpt-oss:120b-cloud` |
+| Prompt | `prompts/system_prompt_rag_v3.1.txt` |
+| Casos | `evals/rag_cases.json` (9 casos, 9/9 avaliados) |
+| Máquina | Windows, 8 threads lógicos, 7,9 GB RAM, **sem GPU** |
+
+Cloud exige Ollama local autenticado (`ollama signin`) ou
+`OLLAMA_API_KEY` no `.env`. Modelos locais continuam funcionando sem credencial —
+a distinção está em `_build_model()` (`src/rag/prompt_rag.py`).
+
+## Como reproduzir
+
+```bash
+python -m src.rag.ingest          # base vetorial
+
+python scripts/benchmark_modelos.py \
+    --modelos gemma4:cloud gpt-oss:120b-cloud gpt-oss:20b-cloud \
+    --saida docs/benchmark_modelos.json
+
+PROMPT_RAG_VERSION=3.1 python evals/run_rag_eval.py \
+    --rag-model gemma4:cloud --judge-model gpt-oss:120b-cloud \
+    --output evals/iteration_2.json
+```

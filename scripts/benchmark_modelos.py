@@ -1,400 +1,362 @@
-"""Benchmark de modelos via Ollama Cloud / LangChain.
+"""
+Benchmark de modelos no caminho real do RAG, para alimentar
+`docs/relatorio_modelos.md`.
 
-Compara 2 modelos generativos executando as mesmas perguntas de
-`evals/sprint3_cases.json`, com hiperparâmetros de geração fixos, e
-apresenta métricas de latência, tokens, aderência ao schema Pydantic v2
-(ConsultaRecarga) e coerência no domínio GoodWe.
+O que este script mede, e por que cada número importa
+======================================================
 
-Uso:
-    python -m scripts.benchmark_modelos
+`evals/run_rag_eval.py` responde "o modelo é bom o bastante para sustentar as
+regras de grounding?". Ele não responde "quanto custa responder", e as duas
+perguntas levam a decisões diferentes: um modelo pode ter fidelidade alta e
+latência de 40 s por turno, o que é inviável para alguém esperando a resposta
+na tela.
+
+As três grandezas medidas aqui:
+
+  1. LATÊNCIA POR TURNO
+     Tempo do `responder()` completo — busca vetorial inclusa, porque é ela
+     que o usuário espera. Medir só a chamada ao modelo esconderia o custo da
+     recuperação.
+
+  2. FIDELIDADE DE CITACAO
+     Fração de respostas com ao menos uma citação no formato exato
+     `[arquivo.pdf, p. N]`, e fração cujo arquivo citado existe nos rótulos
+     do contexto recuperado.
+     A segunda é a que separa um modelo que cita de um modelo que decora o
+     formato: citar `p. 7` quando o contexto só tem `p. 1` é o modo de falha
+     mais difícil de ver a olho, e é exatamente o que a rubrica de
+     `evals/rubrica_manual.md` penaliza como fidelidade `0.5`.
+
+  3. TAXA DE RECUSA
+     Fração de respostas que recusam. Serve de contrapeso à fidelidade: um
+     modelo que recusa tudo tem fidelidade alta e respondibilidade zero.
+
+A escolha de parâmetros é fixa e igual para todos os modelos (`temperature=0`,
+os mesmos que `src/rag/prompt_rag.py` usa), porque comparar modelos com
+temperaturas diferentes mede a temperatura, não o modelo.
+
+Uso (a partir da raiz do projeto):
+
+    python scripts/benchmark_modelos.py
+    python scripts/benchmark_modelos.py --modelos gemma4:cloud gpt-oss:120b-cloud
+    python scripts/benchmark_modelos.py --repeticoes 3
+    python scripts/benchmark_modelos.py --saida docs/benchmark_modelos.json
+
+Os nomes de modelo da nuvem levam o sufixo `-cloud` quando o Ollama local já
+está autenticado (`gemma4:cloud`, `gpt-oss:120b-cloud`). O relatório
+`docs/relatorio_modelos.md` registra qual foi usado em cada execução.
+
+O script mede o pipeline local. Ele não chama a API do RAGAS: as notas de
+fidelidade do RAGAS vêm de `evals/run_rag_eval.py`, e misturar as duas fontes
+numa tabela só tornaria ambíguo de onde veio cada número.
 """
 
+import argparse
 import json
-import os
 import re
-import statistics
 import sys
 import time
+from datetime import datetime
 from pathlib import Path
+from statistics import mean, median
 from typing import Any
 
-import tiktoken
-from dotenv import load_dotenv
-from langchain_core.output_parsers import PydanticOutputParser
-from langchain_core.messages import BaseMessage
-from langchain_core.prompts import ChatPromptTemplate
-from langchain_ollama import ChatOllama
+RAIZ_PROJETO = Path(__file__).resolve().parent.parent
+for _raiz in (RAIZ_PROJETO, RAIZ_PROJETO / "goodwe-chatbot-sprint3"):
+    if str(_raiz) not in sys.path:
+        sys.path.insert(0, str(_raiz))
 
-PROJECT_ROOT = Path(__file__).resolve().parents[1]
-if str(PROJECT_ROOT) not in sys.path:
-    sys.path.insert(0, str(PROJECT_ROOT))
+# Só o rótulo de citação que `src/rag/retriever.py::format_docs` produz e que o
+# prompt exige. O número de página é obrigatório: `[manual.pdf]` sem `p. N` é
+# o formato que o V3.0 lista como proibido, e contá-lo como acerto mediria um
+# formato que o modelo erra.
+ROTULO_CITACAO = re.compile(r"\[([^\[\]]+?),\s*p\.\s*([^\]]+?)\]")
 
-from src.schemas.consulta_recarga import ConsultaRecarga
+# Perguntas de `evals/rag_cases.json` com `expected_sources` não vazio: a base
+# responde a elas, então citação é obrigatória e recusa é erro. As duas últimas
+# linhas seriam testes negativos, mas aqui não servem — para medir taxa de
+# recusa elas distorcem a média, porque recusar é o comportamento correto.
+PERGUNTAS = [
+    "O que é um DR em uma instalação de recarga?",
+    "Como fazer o rateio do custo de energia da recarga entre moradores?",
+    "Quanto custa carregar uma bateria de 60 kWh de 20% a 80%?",
+    "O que é kWh?",
+    "Como avaliar a infraestrutura elétrica antes de instalar carregadores?",
+    "Qual cuidado devo tomar na instalação elétrica?",
+]
 
+MODELOS_PADRAO = ["gemma4:cloud", "gpt-oss:120b-cloud"]
 
-CASES_PATH = PROJECT_ROOT / "evals" / "sprint3_cases.json"
-PROMPT_PATH = PROJECT_ROOT / "prompts" / "system_prompt_v2.2.txt"
-RESULTS_PATH = PROJECT_ROOT / "evals" / "benchmark_modelos_results.json"
+# `RESPONDER_ERRO` de `src/rag/pipeline.py` marca falha de infraestrutura: o
+# pipeline devolveu a mensagem de erro e o LLM nunca respondeu. Essa resposta
+# não tem citação e não é recusa — contá-la em qualquer uma das duas taxas
+# desinforma a leitura do relatório, então ela é separada.
+PREFIXO_ERRO = "Não consegui consultar a base de conhecimento"
 
-HYPERPARAMETROS: dict[str, Any] = {
-    "temperature": 0.2,
-    "top_p": 0.9,
-    "max_tokens": 500,
-}
-
-MODELS = (
-    "gpt-oss:120b",
-    "gpt-oss:20b",
-)
-
-NUM_QUESTIONS = 5
-QUESTION_IDS = (
-    "happy_kwh_concept",
-    "calculation_charge_cost",
-    "missing_calculation_data",
-    "conceptual_dr",
-    "ignore_false_positive",
-)
-
-_DOMAIN_KEYWORDS = (
-    "recarga",
-    "carregador",
-    "carregamento",
-    "ev",
-    "veiculo",
-    "eletrico",
-    "kwh",
-    "kw",
-    "energia",
-    "bateria",
-    "infraestrutura",
-    "eletrica",
-    "disjuntor",
-    "dr",
-    "aterramento",
-    "demanda",
-    "quadro",
-    "proteção",
-    "protecao",
-    "custo",
-    "tarifa",
-    "rateio",
-    "potencia",
-    "potência",
-    "corrente",
-    "condominio",
-    "condomínio",
-    "engenheiro",
-    "eletricista",
-    "instalação",
-    "instalacao",
-)
-
-_MISSING_DATA_KEYWORDS = ("informe", "forneça", "forneca", "dado", "capacidade", "percentual", "necessário", "necessario")
-
-_ACCENT_FREE = {"á", "ã", "é", "ê", "í", "ó", "ô", "õ", "ú", "ç"}
+FRASE_RECUSA = "Não encontrei essa informação na base de conhecimento"
 
 
-def _normalize(text: str) -> str:
-    return text.casefold()
+def _limpar_texto(valor: str) -> str:
+    """Normaliza a resposta antes das contagens.
+
+    O `.env` e a interface usam acentos; o texto observado no terminal deste
+    projeto às vezes chega sem eles, por causa da página de codificação do
+    console. Comparar `"Não encontrei"` contra `"N?o encontrei"` daria taxa de
+    recusa zero sem que nenhum modelo tivesse mudado.
+    """
+    import unicodedata
+
+    sem_acento = unicodedata.normalize("NFKD", valor)
+    return "".join(c for c in sem_acento if not unicodedata.combining(c))
 
 
-def _is_portuguese(text: str) -> bool:
-    tokens = re.findall(r"[a-zà-úâãçêôõ]{3,}", _normalize(text))
-    if not tokens:
-        return False
-    return sum(1 for token in tokens if any(char in _ACCENT_FREE for char in token)) / len(tokens) >= 0.03
-
-
-def load_cases() -> list[dict[str, Any]]:
-    return json.loads(CASES_PATH.read_text(encoding="utf-8"))
-
-
-def select_questions() -> list[dict[str, Any]]:
-    cases = {case["id"]: case for case in load_cases()}
-    selected: list[dict[str, Any]] = []
-    for question_id in QUESTION_IDS:
-        case = cases[question_id]
-        if not case.get("expected_allowed", False):
-            continue
-        selected.append(case)
-    return selected
-
-
-def count_tokens(text: str, encoding: Any) -> int:
-    return len(encoding.encode(text))
-
-
-def build_chat_model(model_name: str) -> ChatOllama:
-    load_dotenv()
-    api_key = os.environ.get("OLLAMA_API_KEY")
-    if not api_key:
-        raise RuntimeError("OLLAMA_API_KEY não configurada no .env")
-
-    return ChatOllama(
-        model=model_name,
-        base_url="https://ollama.com",
-        temperature=HYPERPARAMETROS["temperature"],
-        top_p=HYPERPARAMETROS["top_p"],
-        num_predict=HYPERPARAMETROS["max_tokens"],
-        client_kwargs={
-            "headers": {
-                "Authorization": f"Bearer {api_key}",
-            }
-        },
-    )
-
-
-def build_prompt_messages(question: str, encoding: Any) -> list[BaseMessage]:
-    system_prompt = PROMPT_PATH.read_text(encoding="utf-8")
-    parser = PydanticOutputParser(pydantic_object=ConsultaRecarga)
-    prompt = ChatPromptTemplate.from_messages(
-        [
-            ("system", system_prompt),
-            ("human", "{input}\n\n{format_instructions}"),
-        ]
-    ).partial(format_instructions=parser.get_format_instructions())
-    return prompt.format_messages(input=question)
-
-
-def extract_json_object(content: str) -> dict[str, Any] | None:
+def _versao_prompt() -> str:
+    """Versão do prompt em uso, para que a medição seja atribuível."""
     try:
-        return json.loads(content)
-    except json.JSONDecodeError:
-        pass
+        from src.rag.prompt_rag import get_versao_prompt
 
-    start = content.find("{")
-    if start == -1:
-        return None
-    depth = 0
-    in_string = False
-    escape = False
-    for index in range(start, len(content)):
-        char = content[index]
-        if in_string:
-            if escape:
-                escape = False
-            elif char == "\\":
-                escape = True
-            elif char == '"':
-                in_string = False
-            continue
-        if char == '"':
-            in_string = True
-        elif char == "{":
-            depth += 1
-        elif char == "}":
-            depth -= 1
-            if depth == 0:
-                candidate = content[start : index + 1]
-                try:
-                    return json.loads(candidate)
-                except json.JSONDecodeError:
-                    return None
-    return None
+        return get_versao_prompt()
+    except Exception:  # noqa: BLE001
+        return "indisponivel"
 
 
-def parse_schema(content: str) -> dict[str, Any]:
-    parsed = extract_json_object(content)
-    if parsed is None:
-        return {"valid": False, "error": "JSON não encontrado na resposta"}
-    try:
-        ConsultaRecarga.model_validate(parsed)
-    except Exception as exc:  # noqa: BLE001
-        return {"valid": False, "error": f"{type(exc).__name__}: {exc}"}
-    return {"valid": True, "error": None}
+def _fixar_modelo(modelo: str):
+    """Devolve um contexto que troca o modelo da chain RAG durante a medição.
+
+    Mesma técnica de `evals/run_rag_eval.py`: `responder()` chama
+    `build_rag_chain()` sem argumento e o padrão do projeto é `gpt-oss:120b`,
+    então o modelo é fixado por substituição temporária do símbolo no módulo.
+
+    Args:
+        modelo: Nome do modelo a medir.
+
+    Returns:
+        ContextManager: Envolve a medição e restaura a função original.
+    """
+    from contextlib import contextmanager
+
+    @contextmanager
+    def _fixo():
+        import src.rag.prompt_rag as prompt_rag
+
+        original = prompt_rag.build_rag_chain
+        prompt_rag.build_rag_chain = lambda model=modelo: original(modelo)
+
+        try:
+            yield
+        finally:
+            prompt_rag.build_rag_chain = original
+
+    return _fixo()
 
 
-def domain_coherence(question: str, content: str) -> dict[str, Any]:
-    response = content.strip()
-    if not response:
-        return {"score": 0.0, "label": "vazia", "detalhes": "resposta vazia"}
+def medir_modelo(modelo: str, repeticoes: int) -> dict[str, Any]:
+    """Roda o pipeline real com um modelo e resume as três grandezas.
 
-    normalized_response = _normalize(response)
-    normalized_question = _normalize(question)
+    Args:
+        modelo: Nome do modelo no Ollama.
+        repeticoes: Vezes que cada pergunta é executada. Serve para separar o
+            efeito do modelo do ruído de amostragem; com `temperature=0` a
+            variabilidade é baixa, mas a rede da nuvem introduz a sua.
 
-    score = 0.0
-    score += 2.0 if _is_portuguese(response) else 0.0
+    Returns:
+        dict: Tempos, contagens e taxas. As chaves que descrevem as
+        perguntas ficam dentro de `por_pergunta`; o resumo é o que entra na
+        tabela do relatório.
+    """
+    from src.rag.pipeline import responder
+    from src.rag.retriever import buscar_com_scores
 
-    keyword_hits = sum(
-        1 for keyword in _DOMAIN_KEYWORDS if keyword in normalized_response
-    )
-    score += min(keyword_hits, 5) * 1.2
+    latencias: list[float] = []
+    por_pergunta: list[dict[str, Any]] = []
+    citou = citado_com_fonte_valida = recusou = vazio = erro = total = 0
 
-    json_present = extract_json_object(response) is not None
-    if json_present:
-        score += 0.5
+    with _fixar_modelo(modelo):
+        for pergunta in PERGUNTAS:
+            # Os rótulos recuperados são a lista contra a qual a citação da
+            # resposta é conferida. Sem isso, "citou corretamente" seria apenas
+            # "citou alguma coisa".
+            try:
+                disponiveis = {
+                    (doc.metadata.get("source"), str(doc.metadata.get("page")))
+                    for doc, _ in buscar_com_scores(pergunta)
+                }
+            except Exception as erro_busca:  # noqa: BLE001
+                print(f"  ⚠️  busca falhou para {pergunta[:40]}: {erro_busca}")
+                disponiveis = set()
 
-    requires_data = any(kw in normalized_question for kw in _MISSING_DATA_KEYWORDS)
-    if requires_data and any(kw in normalized_response for kw in _MISSING_DATA_KEYWORDS):
-        score += 1.0
+            for _ in range(repeticoes):
+                inicio = time.perf_counter()
+                resultado = responder(pergunta)
+                latencias.append(time.perf_counter() - inicio)
 
-    if "advogado" in normalized_response or "juríd" in normalized_response:
-        score -= 2.0
+                resposta = resultado["resposta"]
+                normalizada = _limpar_texto(resposta)
+                total += 1
 
-    score = max(0.0, min(round(score, 1), 10.0))
+                if resposta.startswith(PREFIXO_ERRO):
+                    erro += 1
+                    continue
 
-    if score >= 7.0:
-        label = "coerente"
-    elif score >= 4.0:
-        label = "parcial"
-    else:
-        label = "fraca"
+                if not resposta.strip():
+                    vazio += 1
+                    continue
+
+                achados = ROTULO_CITACAO.findall(resposta)
+
+                if achados:
+                    citou += 1
+                    if any(
+                        (arquivo.strip(), pagina.strip()) in disponiveis
+                        for arquivo, pagina in achados
+                    ):
+                        citado_com_fonte_valida += 1
+
+                if FRASE_RECUSA in normalizada:
+                    recusou += 1
+
+            por_pergunta.append(
+                {
+                    "pergunta": pergunta,
+                    # Ordenado por string, não pelo par: os dois elementos são
+                    # strings, mas `sorted` de um set de tuplas funciona; o
+                    # erro real vinha de tentar ordenar dicionários aqui.
+                    "fontes_recuperadas": sorted(
+                        f"{a} | p. {p}" for a, p in disponiveis
+                    ),
+                }
+            )
+
+    respondidas = total - erro - vazio
 
     return {
-        "score": score,
-        "label": label,
-        "detalhes": (
-            f"idioma_portugues={_is_portuguese(response)}; "
-            f"termos_dominio={keyword_hits}; json_presente={json_present}"
+        "modelo": modelo,
+        "execucoes": total,
+        "latencia_media_s": round(mean(latencias), 2) if latencias else None,
+        "latencia_mediana_s": round(median(latencias), 2) if latencias else None,
+        "latencia_min_s": round(min(latencias), 2) if latencias else None,
+        "latencia_max_s": round(max(latencias), 2) if latencias else None,
+        "respostas_vazias": vazio,
+        "erros_infraestrutura": erro,
+        "com_citacao": citou,
+        "citacao_com_fonte_valida": citado_com_fonte_valida,
+        "recusas": recusou,
+        "taxa_citacao": round(citou / respondidas, 4) if respondidas else None,
+        "taxa_citacao_valida": (
+            round(citado_com_fonte_valida / respondidas, 4) if respondidas else None
         ),
+        "taxa_recusa": round(recusou / respondidas, 4) if respondidas else None,
+        "por_pergunta": por_pergunta,
     }
 
 
-def run_single_question(
-    model: ChatOllama,
-    question: str,
-    encoding: Any,
-) -> dict[str, Any]:
-    messages = build_prompt_messages(question, encoding)
-    input_tokens = sum(count_tokens(message.content, encoding) for message in messages)
+def main(argv: list[str] | None = None) -> int:
+    """Executa o benchmark e imprime a tabela que vai para o relatório."""
+    parser = argparse.ArgumentParser(
+        description="Mede latência e fidelidade de citação por modelo no RAG.",
+    )
+    parser.add_argument(
+        "--modelos",
+        nargs="+",
+        default=MODELOS_PADRAO,
+        help=f"modelos a medir (padrão: {' '.join(MODELOS_PADRAO)})",
+    )
+    parser.add_argument(
+        "--repeticoes",
+        type=int,
+        default=1,
+        help="execuções por pergunta (padrão: 1)",
+    )
+    parser.add_argument(
+        "--saida",
+        type=Path,
+        default=None,
+        help="grava o resultado em JSON nesse caminho",
+    )
 
-    started_ns = time.perf_counter_ns()
-    try:
-        response: BaseMessage = model.invoke(messages)
-        error = None
-    except Exception as exc:  # noqa: BLE001
-        response = None
-        error = f"{type(exc).__name__}: {exc}"
-    latency_ms = (time.perf_counter_ns() - started_ns) / 1_000_000
+    args = parser.parse_args(argv)
 
-    if response is None or not response.content:
-        return {
-            "pergunta": question,
-            "latencia_s": latency_ms / 1000,
-            "input_tokens": input_tokens,
-            "output_tokens": 0,
-            "error": error,
-            "json_schema": {"valid": False, "error": "sem resposta"},
-            "coerencia": {"score": 0.0, "label": "vazia", "detalhes": "sem resposta"},
-        }
+    _configurar_stdout()
 
-    content = response.content
-    output_tokens = count_tokens(content, encoding)
-
-    metadata = response.response_metadata or {}
-    return {
-        "pergunta": question,
-        "latencia_s": latency_ms / 1000,
-        "input_tokens": input_tokens,
-        "output_tokens": output_tokens,
-        "prompt_eval_count": metadata.get("prompt_eval_count"),
-        "eval_count": metadata.get("eval_count"),
-        "error": error,
-        "resposta_previa": content[:200],
-        "json_schema": parse_schema(content),
-        "coerencia": domain_coherence(question, content),
-    }
-
-
-def run_benchmark() -> dict[str, Any]:
-    encoding = tiktoken.get_encoding("cl100k_base")
-    questions = select_questions()
-
-    per_model: dict[str, list[dict[str, Any]]] = {}
-    for model_name in MODELS:
-        print(f"=== Rodando modelo: {model_name} ===")
-        model = build_chat_model(model_name)
-        runs = []
-        for question in questions:
-            run = run_single_question(model, question["input"], encoding)
-            runs.append(run)
-            status = "OK" if run["json_schema"]["valid"] else "JSON inválido"
-            print(
-                f"  [{question['id']}] {question['input'][:60]}... "
-                f"lat={run['latencia_s']:.1f}s tokens={(run['input_tokens'], run['output_tokens'])} "
-                f"{status}"
-            )
-        per_model[model_name] = runs
-        print()
-
-    return aggregate_results(per_model)
-
-
-def aggregate_results(per_model: dict[str, list[dict[str, Any]]]) -> dict[str, Any]:
-    aggregated: dict[str, dict[str, Any]] = {}
-    for model_name, runs in per_model.items():
-        latencies = [run["latencia_s"] for run in runs]
-        input_tokens = [run["input_tokens"] for run in runs]
-        output_tokens = [run["output_tokens"] for run in runs]
-        schema_valid = sum(1 for run in runs if run["json_schema"]["valid"])
-        scores = [run["coerencia"]["score"] for run in runs]
-        errors = [run["error"] for run in runs if run.get("error")]
-
-        aggregated[model_name] = {
-            "hiperparametros": HYPERPARAMETROS,
-            "n_perguntas": len(runs),
-            "media_latencia_s": round(statistics.mean(latencies), 2),
-            "media_tokens_entrada": round(statistics.mean(input_tokens), 1),
-            "media_tokens_saida": round(statistics.mean(output_tokens), 1),
-            "total_tokens_entrada": sum(input_tokens),
-            "total_tokens_saida": sum(output_tokens),
-            "acuracia_json_pct": round(schema_valid / len(runs) * 100, 1),
-            "media_coerencia": round(statistics.mean(scores), 1),
-            "erros": errors,
-            "execucoes": runs,
-        }
-    return {"hiperparametros": HYPERPARAMETROS, "modelos": aggregated}
-
-
-def display(results: dict[str, Any]) -> None:
-    print("\n" + "=" * 78)
-    print("RESULTADOS DO BENCHMARK - OLLAMA CLOUD / LANGCHAIN")
     print("=" * 78)
-    print(f"Hiperparâmetros de geração: {results['hiperparametros']}")
-    print()
+    print("  BENCHMARK DE MODELOS — pipeline RAG")
+    print(f"  Prompt RAG: v{_versao_prompt()}")
+    print("=" * 78)
 
-    header = (
-        f"{'Modelo':<16} {'Lat(ms)':>8} {'Tok in':>8} {'Tok out':>8} "
-        f"{'JSON%':>7} {'Coerência':>10}"
-    )
-    print(header)
-    print("-" * len(header))
-    for model_name, metrics in results["modelos"].items():
+    resultados = []
+
+    for modelo in args.modelos:
+        print(f"\n>> {modelo} ({args.repeticoes}x por pergunta)")
+
+        try:
+            resultado = medir_modelo(modelo, args.repeticoes)
+        except Exception as erro:  # noqa: BLE001
+            print(f"  ✗ falhou: {type(erro).__name__}: {erro}")
+            resultados.append({"modelo": modelo, "erro": f"{type(erro).__name__}: {erro}"})
+            continue
+
+        resultados.append(resultado)
+
+        print(f"   latência média ....... {resultado['latencia_media_s']}s")
+        print(f"   com citação .......... {_pct(resultado['taxa_citacao'])}")
+        print(f"   citação válida ....... {_pct(resultado['taxa_citacao_valida'])}")
+        print(f"   recusas .............. {_pct(resultado['taxa_recusa'])}")
+
+        if resultado["erros_infraestrutura"]:
+            print(f"   ⚠️  erros de infra: {resultado['erros_infraestrutura']}")
+        if resultado["respostas_vazias"]:
+            print(f"   ⚠️  respostas vazias: {resultado['respostas_vazias']}")
+
+    print("\n" + "=" * 78)
+    print("  TABELA")
+    print("=" * 78)
+    print(f"{'modelo':<22}{'latência':>10}{'cita':>8}{'c.válida':>10}{'recusa':>9}")
+
+    for resultado in resultados:
+        if "erro" in resultado:
+            print(f"{resultado['modelo']:<22}{'erro':>10}")
+            continue
         print(
-            f"{model_name:<16} "
-            f"{metrics['media_latencia_s'] * 1000:>8.0f} "
-            f"{metrics['media_tokens_entrada']:>8.1f} "
-            f"{metrics['media_tokens_saida']:>8.1f} "
-            f"{metrics['acuracia_json_pct']:>7.1f} "
-            f"{metrics['media_coerencia']:>8.1f}/10"
+            f"{resultado['modelo']:<22}"
+            f"{str(resultado['latencia_media_s']) + 's':>10}"
+            f"{_pct(resultado['taxa_citacao']):>8}"
+            f"{_pct(resultado['taxa_citacao_valida']):>10}"
+            f"{_pct(resultado['taxa_recusa']):>9}"
         )
-    print()
 
-    for model_name, metrics in results["modelos"].items():
-        print(f"--- {model_name} ---")
-        for run in metrics["execucoes"]:
-            print(
-                f"  pergunta: {run['pergunta'][:70]}"
-            )
-            schema = run["json_schema"]
-            schema_text = "válido no schema" if schema["valid"] else f"inválido: {schema['error']}"
-            coherence = run["coerencia"]
-            print(
-                f"    lat={run['latencia_s']:.1f}s in={run['input_tokens']} out={run['output_tokens']} "
-                f"| schema: {schema_text} | coerência: {coherence['score']}/10 ({coherence['label']})"
-            )
+    if args.saida:
+        payload = {
+            "timestamp": datetime.now().isoformat(timespec="seconds"),
+            "prompt_rag_versao": _versao_prompt(),
+            "repeticoes": args.repeticoes,
+            "perguntas": PERGUNTAS,
+            "resultados": resultados,
+        }
+        args.saida.parent.mkdir(parents=True, exist_ok=True)
+        args.saida.write_text(
+            json.dumps(payload, ensure_ascii=False, indent=2), encoding="utf-8"
+        )
+        print(f"\n✓ Salvo em: {args.saida}")
+
+    return 0
 
 
-def main() -> None:
-    results = run_benchmark()
-    RESULTS_PATH.write_text(
-        json.dumps(results, ensure_ascii=False, indent=2),
-        encoding="utf-8",
-    )
-    display(results)
-    print(f"\nResultados salvos em: {RESULTS_PATH}")
+def _pct(valor: float | None) -> str:
+    """Formata uma taxa, tolerando `None` quando não houve resposta."""
+    return "n/d" if valor is None else f"{valor * 100:.0f}%"
+
+
+def _configurar_stdout() -> None:
+    """Força UTF-8 no stdout, como `evals/run_rag_eval.py` faz.
+
+    O console padrão do Python no Windows é `cp1252`, que não tem `⚠️` nem `✓`.
+    Sem isto, redirecionar a saída derruba o script no primeiro print.
+    """
+    for fluxo in (sys.stdout, sys.stderr):
+        reconfigurar = getattr(fluxo, "reconfigure", None)
+        if reconfigurar is not None:
+            reconfigurar(encoding="utf-8", errors="replace")
 
 
 if __name__ == "__main__":
-    main()
+    sys.exit(main())

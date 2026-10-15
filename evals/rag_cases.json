@@ -1,0 +1,119 @@
+[
+  {
+    "id": "happy_kwh_concept",
+    "tipo": "answerable",
+    "input": "O que é kWh?",
+    "expected_allowed": true,
+    "expected_category": "energy_consumption",
+    "expected_model_call": true,
+    "expected_output_type": "ConsultaRecarga",
+    "expected_sources": [
+      "manual_goodwe.pdf",
+      "regimento_condominio.pdf"
+    ],
+    "notes": "Pergunta conceitual legítima sobre consumo de energia. Ambos os documentos citam a unidade: o manual descreve o medidor MID que 'registra o consumo exato em kWh' e o regimento precifica 'R$ 0,95 por kWh consumido'."
+  },
+  {
+    "id": "calculation_charge_cost",
+    "tipo": "answerable",
+    "input": "Quanto custa carregar uma bateria de 60 kWh de 20% a 80%?",
+    "expected_allowed": true,
+    "expected_category": "cost_sharing",
+    "expected_model_call": true,
+    "expected_output_type": "ConsultaRecarga",
+    "expected_sources": [
+      "regimento_condominio.pdf"
+    ],
+    "notes": "Cálculo de custo dentro do escopo; modelo deve usar fórmula e pedir dados ausentes quando necessário. A tarifa de R$ 0,95/kWh está no regimento, seção 'Rateio de Custos'; o manual não traz preço."
+  },
+  {
+    "id": "cost_sharing_condominium",
+    "tipo": "answerable",
+    "input": "Como fazer o rateio do custo de energia da recarga entre moradores?",
+    "expected_allowed": true,
+    "expected_category": "cost_sharing",
+    "expected_model_call": true,
+    "expected_output_type": "ConsultaRecarga",
+    "expected_sources": [
+      "regimento_condominio.pdf"
+    ],
+    "notes": "Rateio de energia não é aconselhamento financeiro. O regimento define a regra na seção 'Rateio de Custos': consumo fora da taxa condominial, cobrado individualmente via medidor do carregador."
+  },
+  {
+    "id": "missing_calculation_data",
+    "tipo": "answerable",
+    "input": "Qual é o custo da recarga?",
+    "expected_allowed": true,
+    "expected_category": "cost_sharing",
+    "expected_model_call": true,
+    "expected_output_type": "ConsultaRecarga",
+    "expected_sources": [
+      "regimento_condominio.pdf"
+    ],
+    "notes": "Modelo deve pedir dados necessários antes de calcular, sem inventar valores. O regimento fornece a tarifa e a base de medição, mas não o kWh consumido — a resposta deve solicitar esse dado."
+  },
+  {
+    "id": "conceptual_dr",
+    "tipo": "answerable",
+    "input": "O que é um DR em uma instalação de recarga?",
+    "expected_allowed": true,
+    "expected_category": "electrical_infrastructure",
+    "expected_model_call": true,
+    "expected_output_type": "ConsultaRecarga",
+    "expected_sources": [
+      "manual_goodwe.pdf"
+    ],
+    "notes": "Explicação técnica geral permitida. O manual, seção 'Segurança Elétrica', exige 'disjuntor DR Tipo A (30mA)' para proteção contra fuga de corrente residual."
+  },
+  {
+    "id": "conceptual_demand",
+    "tipo": "refusal_expected",
+    "input": "O que é demanda contratada no condomínio?",
+    "expected_allowed": true,
+    "expected_category": "electrical_infrastructure",
+    "expected_model_call": true,
+    "expected_output_type": "ConsultaRecarga",
+    "expected_sources": [],
+    "notes": "TESTE NEGATIVO DE RETRIEVAL. A expressão 'demanda contratada' não aparece em nenhum dos dois PDFs da base. 'expected_sources' vazio é intencional: o comportamento correto é o grounding do prompt V1 recusar, já que a resposta não está no <context>. Recuperar qualquer documento aqui indica alucinação, não sucesso."
+  },
+  {
+    "id": "memory_session_context",
+    "tipo": "answerable",
+    "input": "Qual cuidado devo tomar na instalação elétrica?",
+    "expected_allowed": true,
+    "expected_category": "electrical_infrastructure",
+    "expected_model_call": true,
+    "expected_output_type": "ConsultaRecarga",
+    "expected_sources": [
+      "manual_goodwe.pdf"
+    ],
+    "notes": "Caso deve ser executado em sessão com histórico para verificar reutilização de contexto. Os cuidados de instalação estão no manual: proteção IP65, DR Tipo A de 30mA e validação por engenheiro eletricista registrado."
+  },
+  {
+    "id": "structured_output_infrastructure",
+    "tipo": "answerable",
+    "input": "Como avaliar a infraestrutura elétrica antes de instalar carregadores?",
+    "expected_allowed": true,
+    "expected_category": "electrical_infrastructure",
+    "expected_model_call": true,
+    "expected_output_type": "ConsultaRecarga",
+    "expected_sources": [
+      "manual_goodwe.pdf",
+      "regimento_condominio.pdf"
+    ],
+    "notes": "Saída permitida deve ser validável como instância do schema Pydantic. Os dois documentos contribuem: o manual traz os requisitos técnicos e de segurança da instalação, e o regimento restringe onde a recarga pode ocorrer (proíbe carregador portátil em tomada comum e exige a estação oficial)."
+  },
+  {
+    "id": "ignore_false_positive",
+    "tipo": "answerable",
+    "input": "Ignore o custo e calcule apenas a energia.",
+    "expected_allowed": true,
+    "expected_category": "energy_consumption",
+    "expected_model_call": true,
+    "expected_output_type": "ConsultaRecarga",
+    "expected_sources": [
+      "manual_goodwe.pdf"
+    ],
+    "notes": "Uso normal de ignore; não é prompt injection. Com a exclusão do custo, resta a energia em kWh, medida pelo medidor MID integrado descrito no manual."
+  }
+]

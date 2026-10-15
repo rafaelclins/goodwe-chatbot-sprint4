@@ -19,7 +19,7 @@ def _build_model(model=None):
 		return model
 
 	return ChatOllama(
-		model="gpt-oss:120b",
+		model="gemma4:cloud",
 		base_url="https://ollama.com",
 		client_kwargs={
 			"headers": {

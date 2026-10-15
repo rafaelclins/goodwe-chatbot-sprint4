@@ -1,6 +1,12 @@
-# GoodWe Chatbot — Sprint 3
+# GoodWe EV Chatbot — Sprint 4 (RAG com grounding)
 
-Chatbot técnico desenvolvido para auxiliar em questões relacionadas à recarga de veículos elétricos em condomínios, utilizando IA generativa com contexto especializado da GoodWe.
+Chatbot técnico para dúvidas de **recarga de veículos elétricos em condomínios**,
+usando IA generativa ancorada em uma base de conhecimento própria (RAG). Esta
+sprint evolui o chatbot das Sprints 2 e 3 para um sistema que **responde apenas
+com o que está nos manuais**, **cita a fonte** de cada afirmação e recusa quando
+a base não tem a resposta.
+
+Desenvolvido para o Challenge FIAP + GoodWe 2026.
 
 ---
 
@@ -8,181 +14,132 @@ Chatbot técnico desenvolvido para auxiliar em questões relacionadas à recarga
 
 - Rafael Lins — RM: 570588
 - Rafael Gandolfi — RM: 569036
-- Carlos Tavares — RM: 572949
+- Carlos Tavares — RM: 592949
 - Cauã Paes — RM: 569906
 - Guilherme Miranda — RM: 573107
 - João Pedro Soler — RM: 569725
 
 ---
 
-## Objetivo do Projeto
+## O que a Sprint 4 entrega
 
-O objetivo deste projeto é desenvolver um chatbot contextualizado para responder perguntas relacionadas ao ecossistema de recarga de veículos elétricos em condomínios.
+O diferencial da Sprint 4 é o **pipeline RAG (Retrieval-Augmented Generation)**
+com grounding auditável:
 
-O sistema foi desenvolvido como parte do Challenge FIAP + GoodWe 2026, evoluído da Sprint 2 (chatbot funcional) para a Sprint 3 (pipeline com memória, guardrails, structured output e avaliação automatizada).
-
-O chatbot utiliza:
-- histórico de mensagens por sessão
-- system prompt especializado
-- integração com modelo de IA via Ollama (local)
-- controle de contexto técnico
-- limite de histórico por tokens
-- guardrails de escopo e prompt injection
-- saída estruturada validada com Pydantic v2
-
-O foco principal do projeto é garantir respostas coerentes, contextualizadas e alinhadas ao domínio de infraestrutura de recarga elétrica.
-
----
-
-## Funcionalidades Implementadas
-
-Sprint 2:
-- Chatbot funcional em linha de comando
-- Histórico de conversa
-- Contexto persistente via system prompt
-- Integração com API de IA generativa
-- Leitura segura de API Key via `.env`
-
-Sprint 3:
-- Arquitetura baseada em LCEL (`ChatPromptTemplate | ChatOllama | StrOutputParser`)
-- Memória de conversa por `session_id` com `RunnableWithMessageHistory`
-- Controle de histórico por tokens com `trim_messages` (limite padrão de 1000 tokens)
-- Guardrails de escopo temático e detecção de prompt injection
-- Saída estruturada validada com Pydantic v2 (`ConsultaRecarga`)
-- Prompts versionados (`v1`, `v2`, `v2.1`, `v2.2`)
-- Medição de tokens de prompt com `tiktoken`
-- Avaliação automatizada com 16 casos de teste e fake model
-- Bônus: demonstração multi-provider (múltiplos modelos x versões de prompt, modo paralelo/alternado, com consolidação da melhor resposta)
+- **Ingestão de PDFs** da base de conhecimento em uma coleção vetorial persistente
+  no ChromaDB.
+- **Busca semântica** dos trechos mais próximos da pergunta.
+- **Prompt de grounding** que obriga o modelo a responder só com o `<context>`,
+  citar `[arquivo.pdf, p. N]` e recusar quando não houver resposta.
+- **Guardrails** (herdados da Sprint 3) aplicados **antes** de qualquer chamada ao
+  modelo, mais um gate novo de "fora do contexto".
+- **Interface web** em Gradio com conversa e coluna de fontes citadas clicáveis.
+- **Memória por sessão** herdada da Sprint 3, anexada à pergunta antes da busca.
+- **Avaliação automatizada** com RAGAS (*faithfulness*, *answer relevancy*) e uma
+  rubrica manual de fallback.
+- **Benchmark de modelos** (latência, citação, recusa) que fundamenta a escolha do
+  modelo em produção.
 
 ---
 
-## Tecnologias Utilizadas
+## Arquitetura
 
-- Python 3.12
-- LangChain / langchain-core / langchain-ollama
-- Ollama
-- Modelo `gpt-oss:120b`
-- Pydantic v2
-- tiktoken
-- python-dotenv
+Todo o fluxo de um turno converge para `src/rag/pipeline.py::responder()`, que é o
+único caminho de execução — a interface (`app/`) e a avaliação (`evals/`) consomem
+essa função em vez de remontar o fluxo.
+
+```
+pergunta
+   |
+   +-- 1. moderate()            [Sprint 3]  detecção de prompt injection
+   +-- 2. validate_scope()      [Sprint 3]  escopo temático
+   +-- 3. buscar_com_scores()   [Sprint 4]  busca vetorial + gate de contexto
+   +-- 4. build_rag_chain()     [Sprint 4]  prompt de grounding | ChatOllama
+   |
+   +--> {"resposta": str, "fontes": [...], "bloqueado": bool}
+```
+
+Os três primeiros passos são locais e custam milissegundos. Uma pergunta bloqueada
+**nunca chega ao LLM**: não consome token, não depende de rede e não produz
+resposta. Uma falha de infraestrutura (Ollama fora do ar, base ausente) é tratada
+separadamente, para não se confundir com uma recusa de guardrail.
+
+A ordem dos passos é deliberada:
+
+- **Moderação antes de escopo** — uma injeção como "ignore todas as regras" não tem
+  palavra-chave de domínio e seria classificada como fora de escopo, devolvendo uma
+  mensagem que mente sobre a causa.
+- **Escopo antes da busca** — validação por regex, sem I/O; evita uma busca
+  vetorial (que custa embedding) para uma pergunta já destinada à recusa.
+- **Busca antes do LLM** — o limiar de contexto só existe depois que a busca
+  devolve scores.
 
 ---
 
-## Estrutura do Projeto
+## Estrutura do projeto
 
 ```text
-goodwe-chatbot-sprint3/
-│
-├── chatbot.py                  # Chatbot CLI (Sprint 2)
-├── README.md
-├── requirements.txt
-├── .gitignore
-├── .env.example
-│
-├── prompts/                    # Prompts versionados
-│   ├── system_prompt.txt       # Prompt original (Sprint 2)
-│   ├── system_prompt_v1.txt
-│   ├── system_prompt_v2.txt
-│   ├── system_prompt_v2.1.txt
-│   └── system_prompt_v2.2.txt  # Prompt ativo na arquitetura
-│
-├── src/
-│   ├── chain/
-│   │   ├── builder.py          # LCEL: prompt | modelo | parser
-│   │   ├── memoria.py          # RunnableWithMessageHistory + trim_messages
-│   │   └── multi_provider.py   # Demo bônus: compara modelos x versões de prompt
-│   ├── guardrails/
-│   │   ├── moderation.py       # Detecção de prompt injection
-│   │   ├── scope_validator.py  # Validação de escopo temático
-│   │   └── pipeline.py         # Orquestração da entrada do usuário
-│   └── schemas/
-│       └── consulta_recarga.py # Schema Pydantic v2 de saída
-│
+.
+├── app/                          # Interface web (Gradio)
+│   ├── app.py
+│   └── README.md
+├── data/
+│   ├── knowledge_base/           # PDFs de origem
+│   │   ├── manual_goodwe.pdf
+│   │   ├── regimento_condominio.pdf
+│   │   └── README.md
+│   ├── chroma/                   # base antiga (gitignored)
+│   └── chroma_db/                # base vetorial atual (gitignored)
+├── docs/
+│   ├── relatorio_modelos.md      # comparação de modelos no RAG
+│   └── benchmark_modelos.json    # dados brutos de latência/citação
+├── evals/                        # Avaliação do pipeline RAG
+│   ├── README.md
+│   ├── rag_cases.json            # 9 casos (pergunta + fontes esperadas)
+│   ├── run_rag_eval.py           # executa os casos e calcula as métricas
+│   ├── run_repetitions.py        # N execuções por prompt, com média/desvio
+│   ├── ragas_eval.py             # registro do shim do RAGAS
+│   ├── rubrica_manual.md         # rubrica 0-1 (fallback humano)
+│   └── iteration_*.json          # resultados por iteração
+├── prompts/
+│   ├── system_prompt_rag_v3.0.txt
+│   └── system_prompt_rag_v3.1.txt
 ├── scripts/
-│   └── measure_prompt.py       # Medição de tokens com tiktoken
-│
-├── evals/
-│   ├── run_sprint3.py          # Executor de avaliação (fake model)
-│   └── sprint3_cases.json      # 16 casos de avaliação
-│
-└── tests/                      # Suíte de testes automatizados
+│   ├── benchmark_modelos.py      # latência, citação e recusa
+│   └── demo_ingestion.py         # carga + chunking, sem Ollama/Chroma
+├── src/rag/                      # Pipeline RAG (Sprint 4)
+│   ├── loader.py                 # PDF -> Document (metadados normalizados)
+│   ├── chunking.py               # split em chunks 500/100
+│   ├── embeddings.py             # nomic-embed-text
+│   ├── vector_store.py           # ChromaDB (collection goodwe_kb)
+│   ├── ingest.py                 # pipeline de ingestão
+│   ├── retriever.py              # busca + similaridade de cosseno
+│   ├── prompt_rag.py             # prompt versionado + build_rag_chain
+│   ├── guardrails_rag.py         # guardrails da Sprint 3 + gate de contexto
+│   ├── chain.py                  # reexport de compatibilidade
+│   └── pipeline.py               # responder() — orquestração ponta a ponta
+├── tests/
+│   └── test_app_rag_flow.py      # 37 testes do fluxo do app
+├── goodwe-chatbot-sprint3/       # dependência: memória e guardrails (Sprint 3)
+├── .env.example
+├── requirements.txt
+└── README.md
 ```
 
 ---
 
-## Arquitetura (Sprint 3)
+## Tecnologias
 
-A cadeia principal é construída com LangChain Expression Language (LCEL):
+- Python 3.12
+- LangChain / `langchain-core` / `langchain-ollama` / `langchain-chroma`
+- Ollama (local para embeddings; Ollama Cloud para o modelo de chat)
+- ChromaDB (banco vetorial persistente)
+- PyMuPDF + `langchain-text-splitters` (ingestão e chunking)
+- RAGAS + `datasets` (avaliação)
+- Gradio 6 (interface web)
+- Pydantic v2, python-dotenv, pytest
 
-```python
-ChatPromptTemplate | ChatOllama | StrOutputParser
-```
-
-Em `src/chain/builder.py`, o prompt é montado com `ChatPromptTemplate` usando o system prompt versionado (`prompts/system_prompt_v2.2.txt`), um `MessagesPlaceholder` para o histórico e a mensagem humana com as instruções de formato. O modelo é o `gpt-oss:120b` acessado via Ollama local.
-
-### Memória
-
-Em `src/chain/memoria.py`, o histórico é mantido por sessão com `RunnableWithMessageHistory` e `InMemoryChatMessageHistory`, indexado por `session_id`. Sessões diferentes não compartilham histórico.
-
-O controle de tamanho é feito com `trim_messages`:
-
-- limite padrão de 1000 tokens (`max_history_tokens=1000`);
-- contagem aproximada de tokens;
-- mantém as mensagens mais recentes (`strategy="last"`);
-- não mantém mensagens parcialmente (`allow_partial=False`);
-- o histórico recortado começa em uma mensagem humana (`start_on="human"`).
-
-O recorte é aplicado antes e depois de cada chamada à cadeia, garantindo que o histórico armazenado e o histórico fornecido ao modelo respeitem o limite.
-
-### Guardrails
-
-Em `src/guardrails/`, a entrada passa por duas validações antes de chegar ao modelo:
-
-- `moderation.py`: detecta tentativas de prompt injection (jailbreak, revelação de instruções internas, alteração de escopo e outras);
-- `scope_validator.py`: valida o escopo temático (recarga, energia, infraestrutura elétrica, rateio de custos) e bloqueia aconselhamento jurídico, financeiro, decisões de segurança elétrica e especificações exatas de produto sem base.
-
-Entradas bloqueadas recebem resposta local definida no `pipeline.py` e não chegam ao modelo nem são gravadas no histórico.
-
-### Structured Output
-
-A resposta é validada como instância do schema Pydantic v2 `ConsultaRecarga` (`src/schemas/consulta_recarga.py`) com `PydanticOutputParser`. O parser falha se a resposta do modelo não for um JSON válido no formato esperado.
-
-### Prompts Versionados
-
-Os prompts evoluíram ao longo dos sprints:
-
-- `system_prompt.txt`: prompt original (Sprint 2);
-- `system_prompt_v1.txt`: primeira versão estruturada;
-- `system_prompt_v2.txt`: escopo explícito, prioridade de instruções e fronteiras de guardrail;
-- `system_prompt_v2.1.txt`: definição ampliada de escopo e fronteira de fontes de dados;
-- `system_prompt_v2.2.txt`: versão ativa, com fonte de dados restrita ao contexto e instruções preservadas de fórmulas e constantes.
-
-### Medição de Tokens
-
-O script `scripts/measure_prompt.py` mede o tamanho dos prompts com `tiktoken` (encoding `cl100k_base`), retornando caracteres, palavras e tokens de qualquer prompt da pasta `prompts/`.
-
-```bash
-python scripts/measure_prompt.py
-python scripts/measure_prompt.py --prompt prompts/system_prompt_v2.2.txt
-```
-
----
-
-## Instalação
-
-Clone o repositório:
-
-```bash
-git clone LINK_DO_REPOSITORIO
-```
-
-Acesse a pasta do projeto:
-
-```bash
-cd goodwe-chatbot-sprint2
-```
-
-Instale as dependências:
+Instalação:
 
 ```bash
 pip install -r requirements.txt
@@ -192,159 +149,222 @@ pip install -r requirements.txt
 
 ## Configuração
 
-Garanta que o Ollama está instalado e rodando localmente:
+Copie `.env.example` para `.env` e preencha:
 
-```bash
-ollama serve
+```text
+OLLAMA_API_KEY=            # chave da Ollama Cloud (vazia em Ollama local puro)
+OLLAMA_BASE_URL=http://localhost:11434
+OLLAMA_MODEL=              # opcional; sem ela vale MODEL_PADRAO do código
+OLLAMA_EMBEDDING_MODEL=    # opcional; padrão nomic-embed-text
+PROMPT_RAG_VERSION=3.1     # versão do prompt RAG (padrão: 3.1)
 ```
 
-Puxe o modelo necessário:
+- O modelo de chat padrão é `gpt-oss:120b`, que roda na **Ollama Cloud** e exige
+  `OLLAMA_API_KEY`. Modelos locais (ex.: `llama3`) funcionam sem credencial: a
+  distinção está em `_build_model()` de `src/rag/prompt_rag.py`.
+- Os **embeddings** (`nomic-embed-text`) rodam no Ollama local. O modelo de
+  embeddings precisa ser o mesmo na ingestão e na consulta — ele define a dimensão
+  do espaço vetorial.
+
+---
+
+## Ingestão da base
+
+Rode uma vez (ou sempre que adicionar/remover PDFs):
 
 ```bash
-ollama pull gpt-oss:120b
+python -m src.rag.ingest
+```
+
+O pipeline lê os PDFs de `data/knowledge_base/`, divide em chunks e grava os
+vetores na collection `goodwe_kb` em `data/chroma_db/`. Sem isso, a busca não
+retorna nada e toda pergunta é recusada pelo gate de contexto.
+
+Para ver o chunking sem tocar em Ollama/Chroma:
+
+```bash
+python scripts/demo_ingestion.py
 ```
 
 ---
 
 ## Execução
 
-Execute o chatbot CLI com:
+### Interface web (Gradio)
+
+A partir da raiz do projeto:
 
 ```bash
-python chatbot.py
+python -m app.app
+# ou
+gradio app/app.py
+# porta personalizada:
+python -m app.app --port 7890
 ```
 
-Para executar a suíte de testes:
+Abre em `http://127.0.0.1:7860`. Layout em duas colunas: à esquerda a conversa; à
+direita as **fontes do último turno**, no formato `[arquivo.pdf, p. X]`, com link
+clicável para o PDF na página citada. Uma resposta bloqueada é exibida em destaque
+e **sem fontes** — um guardrail recusa antes de consultar a base, então não há
+documento honesto para citar.
+
+### Avaliação (evals)
 
 ```bash
-python -m unittest discover -s tests -v
+python evals/run_rag_eval.py                 # RAGAS (faithfulness + answer relevancy)
+python evals/run_rag_eval.py --manual        # rubrica manual (fallback)
+python evals/run_rag_eval.py --limit 2       # iteração rápida
+PROMPT_RAG_VERSION=3.1 python evals/run_rag_eval.py --output evals/iteration_2.json
+python evals/run_repetitions.py --versions 3.0 3.1 --repeticoes 3
 ```
 
-Para executar a avaliação com fake model (sem chamadas reais ao modelo):
+Detalhes em [`evals/README.md`](evals/README.md).
 
-```bash
-python evals/run_sprint3.py
-```
-
-Para executar o benchmark comparativo de modelos via Ollama Cloud (chamadas reais):
+### Benchmark de modelos
 
 ```bash
 python scripts/benchmark_modelos.py
+python scripts/benchmark_modelos.py --modelos gemma4:cloud gpt-oss:120b-cloud --repeticoes 3
 ```
 
-O benchmark executa 5 perguntas de `evals/sprint3_cases.json` em dois modelos
-(`gpt-oss:120b` e `gpt-oss:20b`) com hiperparâmetros fixos
-(temperature=0.2, top_p=0.9, max_tokens=500) e reporta latência média, tokens
-de entrada/saída (tiktoken), acurácia no JSON do schema `ConsultaRecarga` e
-coerência no domínio. Resultados salvos em `evals/benchmark_modelos_results.json`.
+Mede latência por turno (com a busca vetorial inclusa), fidelidade de citação e
+taxa de recusa. Detalhes em [`docs/relatorio_modelos.md`](docs/relatorio_modelos.md).
 
-### Demonstração Multi-Provider (Bônus)
-
-A funcionalidade opcional `src/chain/multi_provider.py` consulta o mesmo domínio
-com mais de um modelo **e** mais de uma versão de system prompt (ex.: `gpt-oss:120b`
-e `gpt-oss:20b` com `v2.1` e `v2.2`), em modo **paralelo** ou **alternado**. Para
-cada combinação modelo x prompt, a resposta recebe um score 0-10 (validação no
-schema Pydantic `ConsultaRecarga` + fluência + vocabulário do domínio) e a
-demonstração devolve a melhor resposta consolidada junto da comparação completa.
-
-> Se `OLLAMA_API_KEY` estiver no `.env`, as chamadas usam o Ollama Cloud; sem a
-> chave, o script tenta o Ollama local. Qualquer modelo disponível pode ser
-> informado em `--models` (ex.: `gpt-oss:120b qwen3:8b`).
+### Testes
 
 ```bash
-# Execução padrão (paralelo, 2 modelos x 2 prompts)
-python -m src.chain.multi_provider
-
-# Personalizado: modelos, versões de prompt, modo e salvar resultado em JSON
-python -m src.chain.multi_provider \
-  --question "Quanto custa carregar 40 kWh de 20% a 80%?" \
-  --models gpt-oss:120b gpt-oss:20b \
-  --prompts v2.1 v2.2 \
-  --mode paralelo \
-  --output evals/multi_provider_results.json
+python -m unittest discover -s tests -v
+pytest tests/test_app_rag_flow.py -v
 ```
 
----
-
-## Resultados da Avaliação (Sprint 3)
-
-A avaliação roda 16 casos contra o pipeline completo usando um fake model, sem fazer chamadas reais ao Ollama. Resultados:
-
-- 16 casos executados;
-- 7 bloqueados pelos guardrails (jailbreak, revelação de instruções, fora de escopo, especificação de produto sem base, segurança elétrica, aconselhamento jurídico e financeiro);
-- 9 casos permitidos com chamada ao modelo;
-- 9/9 structured outputs válidos como instância de `ConsultaRecarga`;
-- 0 erros;
-- memória validada em conversas de 3+ turnos: o histórico dos turnos anteriores é fornecido ao modelo no turno seguinte;
-- limite de histórico de 1000 tokens validado: históricos acima do limite são reduzidos por `trim_messages` sem mensagens parciais e iniciando em mensagem humana;
-- isolamento entre sessões validado: `session_a` e `session_b` não compartilham histórico.
-
-### Limitação conhecida
-
-A avaliação não garante eliminação de todas as alucinações técnicas. Quando o contexto fornecido não contém a base técnica necessária, o modelo ainda pode introduzir conhecimento técnico externo em algumas respostas.
+Os 37 testes cobrem o fluxo de turno, a seção de fontes, o caminho de bloqueio, a
+sessão e a linha de comando. **Nenhum teste toca Ollama, ChromaDB ou embeddings** —
+`responder()` é mockado e a lógica de cada turno está em funções puras.
 
 ---
 
-## Exemplo de Uso
+## Pipeline RAG
 
-### Pergunta simples
+### Ingestão
 
-Usuário:
-> O que é kWh?
+- `loader.py` carrega cada PDF via `PyMuPDFLoader` e normaliza os metadados para
+  exatamente `{source: <nome do arquivo>, page: <1-indexada>}`. O caminho completo
+  do arquivo vaza para a citação e a página em base 0 faria o modelo citar "p. 0".
+- `chunking.py` usa `RecursiveCharacterTextSplitter` com `chunk_size=500`,
+  `chunk_overlap=100`. Com a base atual (2 PDFs, ~2065 caracteres) isso produz
+  **6 chunks**, cada um com um tema dominante. Os separadores são ordenados do
+  corte mais estrutural (parágrafo) para o menos, para não fragmentar seções.
+- `vector_store.py` grava a collection `goodwe_kb` em `data/chroma_db/` usando
+  `nomic-embed-text`.
 
-Chatbot:
-> O kWh é a unidade de medida da energia elétrica utilizada para calcular o consumo de energia em sistemas elétricos e processos de recarga.
+### Recuperação
 
----
+- `retriever.py` busca por similaridade com `k=4`.
+- A similaridade é **cosseno** calculada a partir da distância do Chroma
+  (`similarity_from_distance`). O scoring nativo do LangChain para espaço `l2`
+  empurraria tudo para `[0.9987, 1.0]`, sem contraste para um limiar.
+- `format_docs()` rotula cada trecho com `[arquivo.pdf, p. N]` no **mesmo formato**
+  exigido para a citação, para que o modelo só copie o rótulo.
 
-### Pergunta técnica
+### Prompt e versões
 
-Usuário:
-> Posso instalar 12 carregadores no meu condomínio?
+- O prompt vive em `prompts/system_prompt_rag_v<X.Y>.txt`, nunca como string no
+  código, para permitir comparar iterações.
+- `PROMPT_RAG_VERSION` decide a versão; sem ela, vale `VERSAO_PROMPT_PADRAO = "3.1"`.
+- `build_rag_chain(model=...)` monta a LCEL
+  `retriever | format_docs | prompt | ChatOllama(temperature=0) | StrOutputParser`.
+- O `<context>` é enviado como **mensagem de usuário**, não dentro do system
+  prompt: conteúdo extraído de PDF é dado não confiável e precisa ficar em um nível
+  de autoridade abaixo das regras.
 
-Chatbot:
-> Para determinar isso, é necessário validar a capacidade elétrica disponível da infraestrutura do condomínio, além da potência total demandada pelos carregadores. Recomenda-se análise com engenheiro eletricista.
+### Memória (integração com a Sprint 3)
 
----
+- `session_id` é opcional. Quando informado, os últimos turnos são transcritos em
+  `<conversation_history>` e anexados à pergunta **antes** da busca vetorial, para
+  que o embedding enxergue "e a corrente dele?" junto do turno que usa o "ele".
+- `registrar_turno()` é separado de `responder()` e só roda quando a resposta
+  **não** foi bloqueada: uma recusa não é uma conversa e não deve voltar como
+  contexto.
 
-## Testes Realizados
+### Guardrails
 
-| Pergunta | Avaliação |
-|---|---|
-| O que é kWh? | Adequada |
-| Quanto custa carregar uma bateria de 60 kWh de 20% a 80%? | Adequada |
-| Quanto tempo leva para carregar uma bateria de 40 kWh? | Adequada |
-| Qual é o melhor carro elétrico do mercado? | Adequada |
-| Posso instalar 12 carregadores no meu condomínio? | Adequada |
-
----
-
-## Limitações
-
-O chatbot não substitui validação profissional de infraestrutura elétrica.
-
-As respostas são baseadas:
-- no contexto definido pelo system prompt
-- no histórico de mensagens
-- nas informações fornecidas pelo usuário
-
----
-
-## Segurança
-
-- O projeto utiliza `.gitignore` para proteger arquivos sensíveis
-- O Ollama roda localmente, sem necessidade de chaves de API externas
-
----
-
-## Demonstração
-
-Vídeo demonstrativo do projeto:
-> LINK_DO_VIDEO(https://youtube.com/shorts/Jqk7_mAXsr0)
+- `guardrails_rag.py` **importa** `moderate()` e `validate_scope()` da Sprint 3 em
+  vez de copiá-los, para não manter duas listas de regex que divergem com o tempo.
+- O único guardrail novo é o **gate de contexto** (`avaliar_contexto()`): se a
+  busca não devolver nenhum trecho relevante, a recusa sai antes do LLM. O limiar
+  é `LIMIAR_SIMILARIDADE = 0.30`, deliberadamente **não calibrado** (ver limitações).
 
 ---
 
-## Repositório
+## Avaliação
 
-GitHub do projeto:
-> LINK_DO_PROJETO(https://github.com/rafaelclins/goodwe-chatbot-sprint2)
+O pipeline é avaliado por dois eixos independentes, medidos pelo RAGAS:
+
+- **Faithfulness** — a resposta se sustenta no contexto recuperado?
+- **Answer relevancy** — a resposta responde ao que foi perguntado?
+
+Com a base atual (2 PDFs) e o judge `gpt-oss:120b-cloud`, os resultados das
+iterações estão em `evals/iteration_*.json`. A comparação honesta entre os prompts
+v3.0 e v3.1 — inclusive o caso em que o judge penalizou uma recusa correta — está
+documentada em [`evals/README.md`](evals/README.md).
+
+O RAGAS 0.4.3 exige um **shim** (`evals/ragas_eval.py`) para importar neste
+ambiente: ele registra em `sys.modules` um módulo sintético para satisfazer um
+import legado do `langchain_community`, sem instalar ou rebaixar nada.
+
+---
+
+## Escolha do modelo
+
+O relatório [`docs/relatorio_modelos.md`](docs/relatorio_modelos.md) compara
+`gemma4:cloud`, `gpt-oss:120b-cloud` e `gpt-oss:20b-cloud` com o mesmo prompt,
+casos e parâmetros. Resumo provisório:
+
+- **`gemma4:cloud`** é o mais rápido e tem a melhor *answer relevancy*;
+- a diferença de *faithfulness* entre os três é pequena demais para decidir;
+- a recomendação é **provisória** — depende de um judge independente, repetições e
+  uma base maior (itens marcados como TODO no relatório).
+
+---
+
+## Base de conhecimento
+
+| Arquivo | Origem | Assunto |
+|---|---|---|
+| `manual_goodwe.pdf` | Fabricante (GoodWe) | Especificações técnicas, segurança elétrica, FAQ |
+| `regimento_condominio.pdf` | Condomínio | Rateio de custos, regras de uso, restrições |
+
+Ambos têm 1 página. Para acrescentar documentos sem descartar o índice atual use
+`add_documents()` de `src/rag/vector_store.py`; reexecutar a ingestão inteira sobre
+os mesmos arquivos cria chunks duplicados. Detalhes em
+[`data/knowledge_base/README.md`](data/knowledge_base/README.md).
+
+---
+
+## Integração com a Sprint 3
+
+A Sprint 3 (memória e guardrails) vive no projeto irmão `goodwe-chatbot-sprint3/`.
+Os dois `src/` são **namespace packages** (PEP 420): com as duas raízes no
+`sys.path`, o interpretador as funde em um único pacote, e `src.rag` (Sprint 4)
+convive com `src.chain` e `src.guardrails` (Sprint 3).
+
+> **Atenção:** essa fusão só funciona enquanto **nenhum** dos dois `src` tiver um
+> `src/__init__.py`. Se algum ganhar um, o outro deixa de ser encontrado e os
+> imports quebram com `ModuleNotFoundError`.
+
+---
+
+## Limitações conhecidas
+
+1. **Caminho do banco vetorial divergente.** `vector_store.py` aponta para
+   `data/chroma_db/`, mas há uma base antiga em `data/chroma/` (metadados pré-KB).
+   Ambos estão no `.gitignore`; o app aponta para o diretório correto até a
+   ingestão ser re-executada.
+2. **`validate_scope()` tem falsos positivos.** Ele reprova perguntas legítimas do
+   domínio e até saudações ("Bom dia", "Obrigado!"). A recalibração é trabalho da
+   Sprint 3.
+3. **Limiar de contexto não calibrado.** Com a base atual, `0.30` fica abaixo de
+   toda a faixa de similaridades observada, então o gate só dispara quando a busca
+   não devolve nada. Calibrar exige uma base maior e casos anotados.
+4. **Base pequena.** Dois PDFs de uma página cada (6 chunks) — pouca granularidade
+   para separar "a base respondeu" de "a busca não achou nada".

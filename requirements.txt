@@ -1,3 +1,4 @@
+# --- Sprint 3 (base) ---
 ollama
 python-dotenv
 langchain
@@ -6,3 +7,24 @@ langchain-ollama
 pydantic>=2,<3
 tiktoken
 reportlab>=4,<6
+
+# --- Dependências da Sprint 4 (RAG e Interface) ---
+
+# Manipulação de PDFs
+pymupdf
+langchain-community
+langchain-text-splitters
+
+# Vector Store (Banco de dados vetorial)
+chromadb
+langchain-chroma
+
+# Avaliação (Evals)
+ragas
+datasets
+
+# Interface Web
+gradio>=6.0
+
+# Testes
+pytest

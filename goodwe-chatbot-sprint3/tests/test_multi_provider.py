@@ -106,7 +106,7 @@ class MultiProviderTest(unittest.TestCase):
             load_prompt("v9.9")
 
     def test_defaults_sao_coerentes(self):
-        self.assertIn("gpt-oss:120b", DEFAULT_MODELS)
+        self.assertIn("gemma4:cloud", DEFAULT_MODELS)
         self.assertIn("v2.2", DEFAULT_PROMPT_VERSIONS)
 
     def test_versao_prompt_com_nome_de_arquivo_tambem_e_aceita(self):

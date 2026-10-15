@@ -1,0 +1,195 @@
+{
+  "timestamp": "2026-10-13T16:16:42",
+  "prompt_rag_versao": "3.1",
+  "repeticoes": 1,
+  "perguntas": [
+    "O que é um DR em uma instalação de recarga?",
+    "Como fazer o rateio do custo de energia da recarga entre moradores?",
+    "Quanto custa carregar uma bateria de 60 kWh de 20% a 80%?",
+    "O que é kWh?",
+    "Como avaliar a infraestrutura elétrica antes de instalar carregadores?",
+    "Qual cuidado devo tomar na instalação elétrica?"
+  ],
+  "resultados": [
+    {
+      "modelo": "gemma4:cloud",
+      "execucoes": 6,
+      "latencia_media_s": 9.3,
+      "latencia_mediana_s": 9.29,
+      "latencia_min_s": 8.72,
+      "latencia_max_s": 9.9,
+      "respostas_vazias": 0,
+      "erros_infraestrutura": 0,
+      "com_citacao": 6,
+      "citacao_com_fonte_valida": 6,
+      "recusas": 0,
+      "taxa_citacao": 1.0,
+      "taxa_citacao_valida": 1.0,
+      "taxa_recusa": 0.0,
+      "por_pergunta": [
+        {
+          "pergunta": "O que é um DR em uma instalação de recarga?",
+          "fontes_recuperadas": [
+            "manual_goodwe.pdf | p. 1",
+            "regimento_condominio.pdf | p. 1"
+          ]
+        },
+        {
+          "pergunta": "Como fazer o rateio do custo de energia da recarga entre moradores?",
+          "fontes_recuperadas": [
+            "manual_goodwe.pdf | p. 1",
+            "regimento_condominio.pdf | p. 1"
+          ]
+        },
+        {
+          "pergunta": "Quanto custa carregar uma bateria de 60 kWh de 20% a 80%?",
+          "fontes_recuperadas": [
+            "manual_goodwe.pdf | p. 1",
+            "regimento_condominio.pdf | p. 1"
+          ]
+        },
+        {
+          "pergunta": "O que é kWh?",
+          "fontes_recuperadas": [
+            "manual_goodwe.pdf | p. 1",
+            "regimento_condominio.pdf | p. 1"
+          ]
+        },
+        {
+          "pergunta": "Como avaliar a infraestrutura elétrica antes de instalar carregadores?",
+          "fontes_recuperadas": [
+            "manual_goodwe.pdf | p. 1",
+            "regimento_condominio.pdf | p. 1"
+          ]
+        },
+        {
+          "pergunta": "Qual cuidado devo tomar na instalação elétrica?",
+          "fontes_recuperadas": [
+            "manual_goodwe.pdf | p. 1",
+            "regimento_condominio.pdf | p. 1"
+          ]
+        }
+      ]
+    },
+    {
+      "modelo": "gpt-oss:120b-cloud",
+      "execucoes": 6,
+      "latencia_media_s": 11.39,
+      "latencia_mediana_s": 11.14,
+      "latencia_min_s": 9.97,
+      "latencia_max_s": 14.25,
+      "respostas_vazias": 0,
+      "erros_infraestrutura": 0,
+      "com_citacao": 6,
+      "citacao_com_fonte_valida": 6,
+      "recusas": 0,
+      "taxa_citacao": 1.0,
+      "taxa_citacao_valida": 1.0,
+      "taxa_recusa": 0.0,
+      "por_pergunta": [
+        {
+          "pergunta": "O que é um DR em uma instalação de recarga?",
+          "fontes_recuperadas": [
+            "manual_goodwe.pdf | p. 1",
+            "regimento_condominio.pdf | p. 1"
+          ]
+        },
+        {
+          "pergunta": "Como fazer o rateio do custo de energia da recarga entre moradores?",
+          "fontes_recuperadas": [
+            "manual_goodwe.pdf | p. 1",
+            "regimento_condominio.pdf | p. 1"
+          ]
+        },
+        {
+          "pergunta": "Quanto custa carregar uma bateria de 60 kWh de 20% a 80%?",
+          "fontes_recuperadas": [
+            "manual_goodwe.pdf | p. 1",
+            "regimento_condominio.pdf | p. 1"
+          ]
+        },
+        {
+          "pergunta": "O que é kWh?",
+          "fontes_recuperadas": [
+            "manual_goodwe.pdf | p. 1",
+            "regimento_condominio.pdf | p. 1"
+          ]
+        },
+        {
+          "pergunta": "Como avaliar a infraestrutura elétrica antes de instalar carregadores?",
+          "fontes_recuperadas": [
+            "manual_goodwe.pdf | p. 1",
+            "regimento_condominio.pdf | p. 1"
+          ]
+        },
+        {
+          "pergunta": "Qual cuidado devo tomar na instalação elétrica?",
+          "fontes_recuperadas": [
+            "manual_goodwe.pdf | p. 1",
+            "regimento_condominio.pdf | p. 1"
+          ]
+        }
+      ]
+    },
+    {
+      "modelo": "gpt-oss:20b-cloud",
+      "execucoes": 6,
+      "latencia_media_s": 14.12,
+      "latencia_mediana_s": 13.32,
+      "latencia_min_s": 12.19,
+      "latencia_max_s": 17.65,
+      "respostas_vazias": 0,
+      "erros_infraestrutura": 0,
+      "com_citacao": 5,
+      "citacao_com_fonte_valida": 5,
+      "recusas": 0,
+      "taxa_citacao": 0.8333,
+      "taxa_citacao_valida": 0.8333,
+      "taxa_recusa": 0.0,
+      "por_pergunta": [
+        {
+          "pergunta": "O que é um DR em uma instalação de recarga?",
+          "fontes_recuperadas": [
+            "manual_goodwe.pdf | p. 1",
+            "regimento_condominio.pdf | p. 1"
+          ]
+        },
+        {
+          "pergunta": "Como fazer o rateio do custo de energia da recarga entre moradores?",
+          "fontes_recuperadas": [
+            "manual_goodwe.pdf | p. 1",
+            "regimento_condominio.pdf | p. 1"
+          ]
+        },
+        {
+          "pergunta": "Quanto custa carregar uma bateria de 60 kWh de 20% a 80%?",
+          "fontes_recuperadas": [
+            "manual_goodwe.pdf | p. 1",
+            "regimento_condominio.pdf | p. 1"
+          ]
+        },
+        {
+          "pergunta": "O que é kWh?",
+          "fontes_recuperadas": [
+            "manual_goodwe.pdf | p. 1",
+            "regimento_condominio.pdf | p. 1"
+          ]
+        },
+        {
+          "pergunta": "Como avaliar a infraestrutura elétrica antes de instalar carregadores?",
+          "fontes_recuperadas": [
+            "manual_goodwe.pdf | p. 1",
+            "regimento_condominio.pdf | p. 1"
+          ]
+        },
+        {
+          "pergunta": "Qual cuidado devo tomar na instalação elétrica?",
+          "fontes_recuperadas": [
+            "manual_goodwe.pdf | p. 1",
+            "regimento_condominio.pdf | p. 1"
+          ]
+        }
+      ]
+    }
+  ]
+}

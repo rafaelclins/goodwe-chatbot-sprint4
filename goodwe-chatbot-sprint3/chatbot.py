@@ -58,7 +58,7 @@ while True:
 
         # Requisição para IA
         response = client.chat(
-            model="gpt-oss:120b",
+            model="gemma4:cloud",
             messages=messages,
             options={"temperature": 0.3}
         )

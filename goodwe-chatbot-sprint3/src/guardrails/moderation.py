@@ -29,7 +29,13 @@ _INJECTION_PATTERNS = (
 	(
 		"scope_redefinition",
 		r"\b(?:agora\s+voce\s+e|voce\s+agora\s+e|mude\s+sua\s+funcao|"
-		r"ignore\s+o\s+escopo|responda\s+sobre\s+qualquer\s+assunto)\b",
+		r"ignore\s+o\s+escopo|responda\s+sobre\s+qualquer\s+assunto)\b|"
+		r"\b(?:sua|esta)\s+(?:unica\s+)?funcao\s+e\b|"
+		r"\b(?:unica|unico)\s+funcao\b|"
+		r"\bvoce\s+e\s+(?:um|uma|o|a)\s+(?:classificador|assistente|bot|"
+		r"agente|especialista)\b|"
+		r"\b(?:responda|responder|reply|answer)\s+(?:apenas|somente|so)\b"
+		r".{0,40}\b(?:palavra|word|motivo)\b",
 	),
 	(
 		"internal_reasoning",

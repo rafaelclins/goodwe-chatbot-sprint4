@@ -1,0 +1,391 @@
+{
+  "iteracao": "2",
+  "timestamp": "2026-10-13T15:56:36",
+  "metodo": "ragas",
+  "prompt_rag_versao": "3.1",
+  "modelo_rag": "gemma4:cloud",
+  "modelo_judge": "gpt-oss:120b-cloud",
+  "embedding": "nomic-embed-text",
+  "resumo": {
+    "metodo": "ragas",
+    "total_casos": 9,
+    "recusados_guardrail": 0,
+    "erros_infraestrutura": 0,
+    "avaliados": 9,
+    "faithfulness_media": 0.5852,
+    "faithfulness_n": 9,
+    "answer_relevancy_media": 0.5657,
+    "answer_relevancy_n": 9
+  },
+  "casos": [
+    {
+      "id": "happy_kwh_concept",
+      "pergunta": "O que é kWh?",
+      "expected_sources": [
+        "manual_goodwe.pdf",
+        "regimento_condominio.pdf"
+      ],
+      "resposta": "O carregador possui um medidor MID integrado que registra o consumo exato em kWh [manual_goodwe.pdf, p. 1]. O custo definido em assembleia para a recarga de veículos elétricos é de R$ 0,95 por kWh consumido [regimento_condominio.pdf, p. 1].\n\nA base de conhecimento não traz a definição técnica do que é a unidade de medida kWh.",
+      "contextos": [
+        "[regimento_condominio.pdf, p. 1]\nREGIMENTO INTERNO PARA USO DE CARREGADORES VEICULARES (VE) \n1. Rateio de Custos O consumo de energia para recarga de veículos elétricos não faz \nparte da taxa condominial geral. O custo atual definido em assembleia é de R$ 0,95 por \nkWh consumido. O valor será cobrado individualmente no boleto mensal da unidade \ncorrespondente, com base nos dados do medidor do carregador GoodWe. \n2. Regras de Uso da Vaga Compartilhada O uso da vaga de recarga é restrito apenas ao",
+        "[manual_goodwe.pdf, p. 1]\nMANUAL DE OPERAÇÃO - GOODWE EV CHARGEOPS \n1. Especificações Técnicas Os carregadores da linha GoodWe EV ChargeOps possuem \npotências ajustáveis de 7.4kW (monofásico) até 22kW (trifásico). Eles contam com proteção \nIP65, permitindo instalação em ambientes externos sujeitos a chuva e poeira. A \ncomunicação com o sistema de gestão é feita via protocolo Modbus TCP através de \nconexão Wi-Fi ou cabo Ethernet. \n2. Segurança Elétrica É obrigatório o uso de disjuntor DR Tipo A (30mA) para proteção",
+        "[manual_goodwe.pdf, p. 1]\nbalanceamento dinâmico de carga. Se vários veículos estiverem carregando \nsimultaneamente, o sistema reduzirá automaticamente a potência de cada um para não \ndesarmar o disjuntor geral do condomínio. Pergunta: Como é feita a medição de consumo? \nResposta: O carregador possui um medidor MID integrado que registra o consumo exato \nem kWh, enviando os dados para o painel de administração via nuvem.",
+        "[manual_goodwe.pdf, p. 1]\n2. Segurança Elétrica É obrigatório o uso de disjuntor DR Tipo A (30mA) para proteção \ncontra fugas de corrente residual. A instalação deve ser validada por um engenheiro \neletricista registrado. \n3. FAQ (Perguntas Frequentes) Pergunta: O carregador suporta balanceamento de carga \n(Load Balancing)? Resposta: Sim. O sistema GoodWe ChargeOps permite o \nbalanceamento dinâmico de carga. Se vários veículos estiverem carregando"
+      ],
+      "fontes": [
+        {
+          "source": "regimento_condominio.pdf",
+          "page": 1,
+          "similaridade": 0.603
+        },
+        {
+          "source": "manual_goodwe.pdf",
+          "page": 1,
+          "similaridade": 0.5966
+        },
+        {
+          "source": "manual_goodwe.pdf",
+          "page": 1,
+          "similaridade": 0.5899
+        },
+        {
+          "source": "manual_goodwe.pdf",
+          "page": 1,
+          "similaridade": 0.5792
+        }
+      ],
+      "bloqueado": false,
+      "recusa_guardrail": false,
+      "erro_infraestrutura": false,
+      "faithfulness": 1.0,
+      "answer_relevancy": 0.7563776263478857
+    },
+    {
+      "id": "calculation_charge_cost",
+      "pergunta": "Quanto custa carregar uma bateria de 60 kWh de 20% a 80%?",
+      "expected_sources": [
+        "regimento_condominio.pdf"
+      ],
+      "resposta": "Para calcular o custo da recarga, utilizarei os dados disponíveis no contexto:\n\n**Dados presentes:**\n* Custo da energia: R$ 0,95 por kWh consumido [regimento_condominio.pdf, p. 1].\n\n**Dados fornecidos pelo usuário:**\n* Capacidade da bateria: 60 kWh.\n* Intervalo de carga: de 20% a 80% (incremento de 60%).\n\n**Cálculo:**\n1. Energia a ser recarregada: $60\\text{ kWh} \\times 0,60 (60\\%) = 36\\text{ kWh}$.\n2. Custo total: $36\\text{ kWh} \\times \\text{R\\$ } 0,95/\\text{kWh} = \\text{R\\$ } 34,20$.\n\nO custo para carregar a bateria de 60 kWh de 20% a 80% é de R$ 34,20 [regimento_condominio.pdf, p. 1].",
+      "contextos": [
+        "[regimento_condominio.pdf, p. 1]\nREGIMENTO INTERNO PARA USO DE CARREGADORES VEICULARES (VE) \n1. Rateio de Custos O consumo de energia para recarga de veículos elétricos não faz \nparte da taxa condominial geral. O custo atual definido em assembleia é de R$ 0,95 por \nkWh consumido. O valor será cobrado individualmente no boleto mensal da unidade \ncorrespondente, com base nos dados do medidor do carregador GoodWe. \n2. Regras de Uso da Vaga Compartilhada O uso da vaga de recarga é restrito apenas ao",
+        "[manual_goodwe.pdf, p. 1]\nbalanceamento dinâmico de carga. Se vários veículos estiverem carregando \nsimultaneamente, o sistema reduzirá automaticamente a potência de cada um para não \ndesarmar o disjuntor geral do condomínio. Pergunta: Como é feita a medição de consumo? \nResposta: O carregador possui um medidor MID integrado que registra o consumo exato \nem kWh, enviando os dados para o painel de administração via nuvem.",
+        "[manual_goodwe.pdf, p. 1]\n2. Segurança Elétrica É obrigatório o uso de disjuntor DR Tipo A (30mA) para proteção \ncontra fugas de corrente residual. A instalação deve ser validada por um engenheiro \neletricista registrado. \n3. FAQ (Perguntas Frequentes) Pergunta: O carregador suporta balanceamento de carga \n(Load Balancing)? Resposta: Sim. O sistema GoodWe ChargeOps permite o \nbalanceamento dinâmico de carga. Se vários veículos estiverem carregando",
+        "[regimento_condominio.pdf, p. 1]\n2. Regras de Uso da Vaga Compartilhada O uso da vaga de recarga é restrito apenas ao \nperíodo em que o veículo estiver ativamente carregando. Após a conclusão da carga \n(100%), o morador tem uma tolerância de 60 minutos para retirar o veículo da vaga. O \ndescumprimento gera multa automática de R$ 50,00 por hora excedente. \n3. Restrições É terminantemente proibido o uso de carregadores portáteis ligados \ndiretamente nas tomadas comuns das garagens. Toda recarga deve ocorrer exclusivamente"
+      ],
+      "fontes": [
+        {
+          "source": "regimento_condominio.pdf",
+          "page": 1,
+          "similaridade": 0.6826
+        },
+        {
+          "source": "manual_goodwe.pdf",
+          "page": 1,
+          "similaridade": 0.6585
+        },
+        {
+          "source": "manual_goodwe.pdf",
+          "page": 1,
+          "similaridade": 0.6221
+        },
+        {
+          "source": "regimento_condominio.pdf",
+          "page": 1,
+          "similaridade": 0.5965
+        }
+      ],
+      "bloqueado": false,
+      "recusa_guardrail": false,
+      "erro_infraestrutura": false,
+      "faithfulness": 0.16666666666666666,
+      "answer_relevancy": 0.9245070380084233
+    },
+    {
+      "id": "cost_sharing_condominium",
+      "pergunta": "Como fazer o rateio do custo de energia da recarga entre moradores?",
+      "expected_sources": [
+        "regimento_condominio.pdf"
+      ],
+      "resposta": "O consumo de energia para recarga de veículos elétricos não integra a taxa condominial geral [regimento_condominio.pdf, p. 1]. O custo definido em assembleia é de R$ 0,95 por kWh consumido, sendo a cobrança realizada individualmente no boleto mensal da unidade, com base nos dados do medidor do carregador GoodWe [regimento_condominio.pdf, p. 1].",
+      "contextos": [
+        "[regimento_condominio.pdf, p. 1]\nREGIMENTO INTERNO PARA USO DE CARREGADORES VEICULARES (VE) \n1. Rateio de Custos O consumo de energia para recarga de veículos elétricos não faz \nparte da taxa condominial geral. O custo atual definido em assembleia é de R$ 0,95 por \nkWh consumido. O valor será cobrado individualmente no boleto mensal da unidade \ncorrespondente, com base nos dados do medidor do carregador GoodWe. \n2. Regras de Uso da Vaga Compartilhada O uso da vaga de recarga é restrito apenas ao",
+        "[regimento_condominio.pdf, p. 1]\n2. Regras de Uso da Vaga Compartilhada O uso da vaga de recarga é restrito apenas ao \nperíodo em que o veículo estiver ativamente carregando. Após a conclusão da carga \n(100%), o morador tem uma tolerância de 60 minutos para retirar o veículo da vaga. O \ndescumprimento gera multa automática de R$ 50,00 por hora excedente. \n3. Restrições É terminantemente proibido o uso de carregadores portáteis ligados \ndiretamente nas tomadas comuns das garagens. Toda recarga deve ocorrer exclusivamente",
+        "[manual_goodwe.pdf, p. 1]\nbalanceamento dinâmico de carga. Se vários veículos estiverem carregando \nsimultaneamente, o sistema reduzirá automaticamente a potência de cada um para não \ndesarmar o disjuntor geral do condomínio. Pergunta: Como é feita a medição de consumo? \nResposta: O carregador possui um medidor MID integrado que registra o consumo exato \nem kWh, enviando os dados para o painel de administração via nuvem.",
+        "[manual_goodwe.pdf, p. 1]\n2. Segurança Elétrica É obrigatório o uso de disjuntor DR Tipo A (30mA) para proteção \ncontra fugas de corrente residual. A instalação deve ser validada por um engenheiro \neletricista registrado. \n3. FAQ (Perguntas Frequentes) Pergunta: O carregador suporta balanceamento de carga \n(Load Balancing)? Resposta: Sim. O sistema GoodWe ChargeOps permite o \nbalanceamento dinâmico de carga. Se vários veículos estiverem carregando"
+      ],
+      "fontes": [
+        {
+          "source": "regimento_condominio.pdf",
+          "page": 1,
+          "similaridade": 0.7244
+        },
+        {
+          "source": "regimento_condominio.pdf",
+          "page": 1,
+          "similaridade": 0.6713
+        },
+        {
+          "source": "manual_goodwe.pdf",
+          "page": 1,
+          "similaridade": 0.6531
+        },
+        {
+          "source": "manual_goodwe.pdf",
+          "page": 1,
+          "similaridade": 0.6457
+        }
+      ],
+      "bloqueado": false,
+      "recusa_guardrail": false,
+      "erro_infraestrutura": false,
+      "faithfulness": 1.0,
+      "answer_relevancy": 0.7494129681177187
+    },
+    {
+      "id": "missing_calculation_data",
+      "pergunta": "Qual é o custo da recarga?",
+      "expected_sources": [
+        "regimento_condominio.pdf"
+      ],
+      "resposta": "O custo atual definido em assembleia é de R$ 0,95 por kWh consumido [regimento_condominio.pdf, p. 1].",
+      "contextos": [
+        "[regimento_condominio.pdf, p. 1]\n2. Regras de Uso da Vaga Compartilhada O uso da vaga de recarga é restrito apenas ao \nperíodo em que o veículo estiver ativamente carregando. Após a conclusão da carga \n(100%), o morador tem uma tolerância de 60 minutos para retirar o veículo da vaga. O \ndescumprimento gera multa automática de R$ 50,00 por hora excedente. \n3. Restrições É terminantemente proibido o uso de carregadores portáteis ligados \ndiretamente nas tomadas comuns das garagens. Toda recarga deve ocorrer exclusivamente",
+        "[regimento_condominio.pdf, p. 1]\ndiretamente nas tomadas comuns das garagens. Toda recarga deve ocorrer exclusivamente \nna estação oficial da GoodWe.",
+        "[manual_goodwe.pdf, p. 1]\nbalanceamento dinâmico de carga. Se vários veículos estiverem carregando \nsimultaneamente, o sistema reduzirá automaticamente a potência de cada um para não \ndesarmar o disjuntor geral do condomínio. Pergunta: Como é feita a medição de consumo? \nResposta: O carregador possui um medidor MID integrado que registra o consumo exato \nem kWh, enviando os dados para o painel de administração via nuvem.",
+        "[regimento_condominio.pdf, p. 1]\nREGIMENTO INTERNO PARA USO DE CARREGADORES VEICULARES (VE) \n1. Rateio de Custos O consumo de energia para recarga de veículos elétricos não faz \nparte da taxa condominial geral. O custo atual definido em assembleia é de R$ 0,95 por \nkWh consumido. O valor será cobrado individualmente no boleto mensal da unidade \ncorrespondente, com base nos dados do medidor do carregador GoodWe. \n2. Regras de Uso da Vaga Compartilhada O uso da vaga de recarga é restrito apenas ao"
+      ],
+      "fontes": [
+        {
+          "source": "regimento_condominio.pdf",
+          "page": 1,
+          "similaridade": 0.6437
+        },
+        {
+          "source": "regimento_condominio.pdf",
+          "page": 1,
+          "similaridade": 0.6014
+        },
+        {
+          "source": "manual_goodwe.pdf",
+          "page": 1,
+          "similaridade": 0.5887
+        },
+        {
+          "source": "regimento_condominio.pdf",
+          "page": 1,
+          "similaridade": 0.5819
+        }
+      ],
+      "bloqueado": false,
+      "recusa_guardrail": false,
+      "erro_infraestrutura": false,
+      "faithfulness": 1.0,
+      "answer_relevancy": 0.5669289610359827
+    },
+    {
+      "id": "conceptual_dr",
+      "pergunta": "O que é um DR em uma instalação de recarga?",
+      "expected_sources": [
+        "manual_goodwe.pdf"
+      ],
+      "resposta": "O manual exige o uso de disjuntor DR Tipo A (30mA) para a proteção contra fugas de corrente residual [manual_goodwe.pdf, p. 1].\n\nA base não traz a definição técnica do que é a sigla DR, apenas a obrigatoriedade de seu uso e a especificação do tipo.",
+      "contextos": [
+        "[manual_goodwe.pdf, p. 1]\nbalanceamento dinâmico de carga. Se vários veículos estiverem carregando \nsimultaneamente, o sistema reduzirá automaticamente a potência de cada um para não \ndesarmar o disjuntor geral do condomínio. Pergunta: Como é feita a medição de consumo? \nResposta: O carregador possui um medidor MID integrado que registra o consumo exato \nem kWh, enviando os dados para o painel de administração via nuvem.",
+        "[regimento_condominio.pdf, p. 1]\n2. Regras de Uso da Vaga Compartilhada O uso da vaga de recarga é restrito apenas ao \nperíodo em que o veículo estiver ativamente carregando. Após a conclusão da carga \n(100%), o morador tem uma tolerância de 60 minutos para retirar o veículo da vaga. O \ndescumprimento gera multa automática de R$ 50,00 por hora excedente. \n3. Restrições É terminantemente proibido o uso de carregadores portáteis ligados \ndiretamente nas tomadas comuns das garagens. Toda recarga deve ocorrer exclusivamente",
+        "[regimento_condominio.pdf, p. 1]\ndiretamente nas tomadas comuns das garagens. Toda recarga deve ocorrer exclusivamente \nna estação oficial da GoodWe.",
+        "[manual_goodwe.pdf, p. 1]\n2. Segurança Elétrica É obrigatório o uso de disjuntor DR Tipo A (30mA) para proteção \ncontra fugas de corrente residual. A instalação deve ser validada por um engenheiro \neletricista registrado. \n3. FAQ (Perguntas Frequentes) Pergunta: O carregador suporta balanceamento de carga \n(Load Balancing)? Resposta: Sim. O sistema GoodWe ChargeOps permite o \nbalanceamento dinâmico de carga. Se vários veículos estiverem carregando"
+      ],
+      "fontes": [
+        {
+          "source": "manual_goodwe.pdf",
+          "page": 1,
+          "similaridade": 0.6474
+        },
+        {
+          "source": "regimento_condominio.pdf",
+          "page": 1,
+          "similaridade": 0.638
+        },
+        {
+          "source": "regimento_condominio.pdf",
+          "page": 1,
+          "similaridade": 0.63
+        },
+        {
+          "source": "manual_goodwe.pdf",
+          "page": 1,
+          "similaridade": 0.5977
+        }
+      ],
+      "bloqueado": false,
+      "recusa_guardrail": false,
+      "erro_infraestrutura": false,
+      "faithfulness": 0.6,
+      "answer_relevancy": 0.5041813331664389
+    },
+    {
+      "id": "conceptual_demand",
+      "pergunta": "O que é demanda contratada no condomínio?",
+      "expected_sources": [],
+      "resposta": "Não encontrei essa informação na base de conhecimento.\n\nPara responder a essa pergunta, seria necessário um documento que tratasse do contrato de energia do condomínio com a concessionária ou a definição técnica de demanda contratada.",
+      "contextos": [
+        "[manual_goodwe.pdf, p. 1]\nbalanceamento dinâmico de carga. Se vários veículos estiverem carregando \nsimultaneamente, o sistema reduzirá automaticamente a potência de cada um para não \ndesarmar o disjuntor geral do condomínio. Pergunta: Como é feita a medição de consumo? \nResposta: O carregador possui um medidor MID integrado que registra o consumo exato \nem kWh, enviando os dados para o painel de administração via nuvem.",
+        "[regimento_condominio.pdf, p. 1]\nREGIMENTO INTERNO PARA USO DE CARREGADORES VEICULARES (VE) \n1. Rateio de Custos O consumo de energia para recarga de veículos elétricos não faz \nparte da taxa condominial geral. O custo atual definido em assembleia é de R$ 0,95 por \nkWh consumido. O valor será cobrado individualmente no boleto mensal da unidade \ncorrespondente, com base nos dados do medidor do carregador GoodWe. \n2. Regras de Uso da Vaga Compartilhada O uso da vaga de recarga é restrito apenas ao",
+        "[regimento_condominio.pdf, p. 1]\ndiretamente nas tomadas comuns das garagens. Toda recarga deve ocorrer exclusivamente \nna estação oficial da GoodWe.",
+        "[regimento_condominio.pdf, p. 1]\n2. Regras de Uso da Vaga Compartilhada O uso da vaga de recarga é restrito apenas ao \nperíodo em que o veículo estiver ativamente carregando. Após a conclusão da carga \n(100%), o morador tem uma tolerância de 60 minutos para retirar o veículo da vaga. O \ndescumprimento gera multa automática de R$ 50,00 por hora excedente. \n3. Restrições É terminantemente proibido o uso de carregadores portáteis ligados \ndiretamente nas tomadas comuns das garagens. Toda recarga deve ocorrer exclusivamente"
+      ],
+      "fontes": [
+        {
+          "source": "manual_goodwe.pdf",
+          "page": 1,
+          "similaridade": 0.6864
+        },
+        {
+          "source": "regimento_condominio.pdf",
+          "page": 1,
+          "similaridade": 0.6365
+        },
+        {
+          "source": "regimento_condominio.pdf",
+          "page": 1,
+          "similaridade": 0.6316
+        },
+        {
+          "source": "regimento_condominio.pdf",
+          "page": 1,
+          "similaridade": 0.628
+        }
+      ],
+      "bloqueado": false,
+      "recusa_guardrail": false,
+      "erro_infraestrutura": false,
+      "faithfulness": 0.0,
+      "answer_relevancy": 0.0
+    },
+    {
+      "id": "memory_session_context",
+      "pergunta": "Qual cuidado devo tomar na instalação elétrica?",
+      "expected_sources": [
+        "manual_goodwe.pdf"
+      ],
+      "resposta": "É obrigatório o uso de disjuntor DR Tipo A (30mA) para proteção contra fugas de corrente residual [manual_goodwe.pdf, p. 1]. Além disso, a instalação deve ser validada por um engenheiro eletricista registrado [manual_goodwe.pdf, p. 1].",
+      "contextos": [
+        "[manual_goodwe.pdf, p. 1]\n2. Segurança Elétrica É obrigatório o uso de disjuntor DR Tipo A (30mA) para proteção \ncontra fugas de corrente residual. A instalação deve ser validada por um engenheiro \neletricista registrado. \n3. FAQ (Perguntas Frequentes) Pergunta: O carregador suporta balanceamento de carga \n(Load Balancing)? Resposta: Sim. O sistema GoodWe ChargeOps permite o \nbalanceamento dinâmico de carga. Se vários veículos estiverem carregando",
+        "[manual_goodwe.pdf, p. 1]\nMANUAL DE OPERAÇÃO - GOODWE EV CHARGEOPS \n1. Especificações Técnicas Os carregadores da linha GoodWe EV ChargeOps possuem \npotências ajustáveis de 7.4kW (monofásico) até 22kW (trifásico). Eles contam com proteção \nIP65, permitindo instalação em ambientes externos sujeitos a chuva e poeira. A \ncomunicação com o sistema de gestão é feita via protocolo Modbus TCP através de \nconexão Wi-Fi ou cabo Ethernet. \n2. Segurança Elétrica É obrigatório o uso de disjuntor DR Tipo A (30mA) para proteção",
+        "[manual_goodwe.pdf, p. 1]\nbalanceamento dinâmico de carga. Se vários veículos estiverem carregando \nsimultaneamente, o sistema reduzirá automaticamente a potência de cada um para não \ndesarmar o disjuntor geral do condomínio. Pergunta: Como é feita a medição de consumo? \nResposta: O carregador possui um medidor MID integrado que registra o consumo exato \nem kWh, enviando os dados para o painel de administração via nuvem.",
+        "[regimento_condominio.pdf, p. 1]\ndiretamente nas tomadas comuns das garagens. Toda recarga deve ocorrer exclusivamente \nna estação oficial da GoodWe."
+      ],
+      "fontes": [
+        {
+          "source": "manual_goodwe.pdf",
+          "page": 1,
+          "similaridade": 0.6938
+        },
+        {
+          "source": "manual_goodwe.pdf",
+          "page": 1,
+          "similaridade": 0.6596
+        },
+        {
+          "source": "manual_goodwe.pdf",
+          "page": 1,
+          "similaridade": 0.6534
+        },
+        {
+          "source": "regimento_condominio.pdf",
+          "page": 1,
+          "similaridade": 0.6489
+        }
+      ],
+      "bloqueado": false,
+      "recusa_guardrail": false,
+      "erro_infraestrutura": false,
+      "faithfulness": 1.0,
+      "answer_relevancy": 0.539413156380375
+    },
+    {
+      "id": "structured_output_infrastructure",
+      "pergunta": "Como avaliar a infraestrutura elétrica antes de instalar carregadores?",
+      "expected_sources": [
+        "manual_goodwe.pdf",
+        "regimento_condominio.pdf"
+      ],
+      "resposta": "A instalação deve ser validada por um engenheiro eletricista registrado [manual_goodwe.pdf, p. 1]. Além disso, é obrigatório o uso de disjuntor DR Tipo A (30mA) para a proteção contra fugas de corrente residual [manual_goodwe.pdf, p. 1].\n\nA base de conhecimento não fornece um guia passo a passo ou critérios técnicos detalhados de avaliação da infraestrutura elétrica prévia à instalação.",
+      "contextos": [
+        "[regimento_condominio.pdf, p. 1]\nREGIMENTO INTERNO PARA USO DE CARREGADORES VEICULARES (VE) \n1. Rateio de Custos O consumo de energia para recarga de veículos elétricos não faz \nparte da taxa condominial geral. O custo atual definido em assembleia é de R$ 0,95 por \nkWh consumido. O valor será cobrado individualmente no boleto mensal da unidade \ncorrespondente, com base nos dados do medidor do carregador GoodWe. \n2. Regras de Uso da Vaga Compartilhada O uso da vaga de recarga é restrito apenas ao",
+        "[manual_goodwe.pdf, p. 1]\n2. Segurança Elétrica É obrigatório o uso de disjuntor DR Tipo A (30mA) para proteção \ncontra fugas de corrente residual. A instalação deve ser validada por um engenheiro \neletricista registrado. \n3. FAQ (Perguntas Frequentes) Pergunta: O carregador suporta balanceamento de carga \n(Load Balancing)? Resposta: Sim. O sistema GoodWe ChargeOps permite o \nbalanceamento dinâmico de carga. Se vários veículos estiverem carregando",
+        "[manual_goodwe.pdf, p. 1]\nbalanceamento dinâmico de carga. Se vários veículos estiverem carregando \nsimultaneamente, o sistema reduzirá automaticamente a potência de cada um para não \ndesarmar o disjuntor geral do condomínio. Pergunta: Como é feita a medição de consumo? \nResposta: O carregador possui um medidor MID integrado que registra o consumo exato \nem kWh, enviando os dados para o painel de administração via nuvem.",
+        "[manual_goodwe.pdf, p. 1]\nMANUAL DE OPERAÇÃO - GOODWE EV CHARGEOPS \n1. Especificações Técnicas Os carregadores da linha GoodWe EV ChargeOps possuem \npotências ajustáveis de 7.4kW (monofásico) até 22kW (trifásico). Eles contam com proteção \nIP65, permitindo instalação em ambientes externos sujeitos a chuva e poeira. A \ncomunicação com o sistema de gestão é feita via protocolo Modbus TCP através de \nconexão Wi-Fi ou cabo Ethernet. \n2. Segurança Elétrica É obrigatório o uso de disjuntor DR Tipo A (30mA) para proteção"
+      ],
+      "fontes": [
+        {
+          "source": "regimento_condominio.pdf",
+          "page": 1,
+          "similaridade": 0.6453
+        },
+        {
+          "source": "manual_goodwe.pdf",
+          "page": 1,
+          "similaridade": 0.6218
+        },
+        {
+          "source": "manual_goodwe.pdf",
+          "page": 1,
+          "similaridade": 0.6006
+        },
+        {
+          "source": "manual_goodwe.pdf",
+          "page": 1,
+          "similaridade": 0.5681
+        }
+      ],
+      "bloqueado": false,
+      "recusa_guardrail": false,
+      "erro_infraestrutura": false,
+      "faithfulness": 0.5,
+      "answer_relevancy": 0.5070633970147175
+    },
+    {
+      "id": "ignore_false_positive",
+      "pergunta": "Ignore o custo e calcule apenas a energia.",
+      "expected_sources": [
+        "manual_goodwe.pdf"
+      ],
+      "resposta": "Não encontrei essa informação na base de conhecimento.\n\nPara realizar esse cálculo, seria necessário que você informasse a quantidade de energia consumida (em kWh) ou a potência do carregador utilizada e o tempo de recarga.",
+      "contextos": [
+        "[manual_goodwe.pdf, p. 1]\nbalanceamento dinâmico de carga. Se vários veículos estiverem carregando \nsimultaneamente, o sistema reduzirá automaticamente a potência de cada um para não \ndesarmar o disjuntor geral do condomínio. Pergunta: Como é feita a medição de consumo? \nResposta: O carregador possui um medidor MID integrado que registra o consumo exato \nem kWh, enviando os dados para o painel de administração via nuvem.",
+        "[regimento_condominio.pdf, p. 1]\nREGIMENTO INTERNO PARA USO DE CARREGADORES VEICULARES (VE) \n1. Rateio de Custos O consumo de energia para recarga de veículos elétricos não faz \nparte da taxa condominial geral. O custo atual definido em assembleia é de R$ 0,95 por \nkWh consumido. O valor será cobrado individualmente no boleto mensal da unidade \ncorrespondente, com base nos dados do medidor do carregador GoodWe. \n2. Regras de Uso da Vaga Compartilhada O uso da vaga de recarga é restrito apenas ao",
+        "[manual_goodwe.pdf, p. 1]\n2. Segurança Elétrica É obrigatório o uso de disjuntor DR Tipo A (30mA) para proteção \ncontra fugas de corrente residual. A instalação deve ser validada por um engenheiro \neletricista registrado. \n3. FAQ (Perguntas Frequentes) Pergunta: O carregador suporta balanceamento de carga \n(Load Balancing)? Resposta: Sim. O sistema GoodWe ChargeOps permite o \nbalanceamento dinâmico de carga. Se vários veículos estiverem carregando",
+        "[manual_goodwe.pdf, p. 1]\nMANUAL DE OPERAÇÃO - GOODWE EV CHARGEOPS \n1. Especificações Técnicas Os carregadores da linha GoodWe EV ChargeOps possuem \npotências ajustáveis de 7.4kW (monofásico) até 22kW (trifásico). Eles contam com proteção \nIP65, permitindo instalação em ambientes externos sujeitos a chuva e poeira. A \ncomunicação com o sistema de gestão é feita via protocolo Modbus TCP através de \nconexão Wi-Fi ou cabo Ethernet. \n2. Segurança Elétrica É obrigatório o uso de disjuntor DR Tipo A (30mA) para proteção"
+      ],
+      "fontes": [
+        {
+          "source": "manual_goodwe.pdf",
+          "page": 1,
+          "similaridade": 0.6166
+        },
+        {
+          "source": "regimento_condominio.pdf",
+          "page": 1,
+          "similaridade": 0.6007
+        },
+        {
+          "source": "manual_goodwe.pdf",
+          "page": 1,
+          "similaridade": 0.5902
+        },
+        {
+          "source": "manual_goodwe.pdf",
+          "page": 1,
+          "similaridade": 0.5884
+        }
+      ],
+      "bloqueado": false,
+      "recusa_guardrail": false,
+      "erro_infraestrutura": false,
+      "faithfulness": 0.0,
+      "answer_relevancy": 0.5434426972878179
+    }
+  ]
+}

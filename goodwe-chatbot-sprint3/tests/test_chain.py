@@ -24,8 +24,8 @@ class ChainTest(unittest.TestCase):
             text=True,
             check=False,
         )
-        if "gpt-oss:120b" not in models.stdout:
-            self.skipTest("Model gpt-oss:120b not available")
+        if "gemma4:cloud" not in models.stdout:
+            self.skipTest("Model gemma4:cloud not available")
 
         response = chain.invoke({"input": "O que é kWh?"})
         self.assertIsInstance(response, str)

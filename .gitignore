@@ -1,6 +1,21 @@
+# --- Segredos / configuração local ---
 .env
-venv/
-.idea/
+
+# --- Python ---
 __pycache__/
-evals/sprint3_results.json
-evals/multi_provider_results.json
+*.py[cod]
+.venv/
+venv/
+.pytest_cache/
+.ipynb_checkpoints/
+
+# --- IDE ---
+.idea/
+.vscode/
+
+# --- Dados gerados (base vetorial) ---
+data/chroma/
+data/chroma_db/
+
+# --- Artefatos de avaliação ---
+evals/*_results.json

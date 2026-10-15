@@ -8,7 +8,7 @@ Uso pelo CLI (chamadas reais ao Ollama):
 
     python -m src.chain.multi_provider
     python -m src.chain.multi_provider --question "Quanto custa carregar 40 kWh?" \
-        --models gpt-oss:120b qwen3:8b --prompts v2.1 v2.2 --mode paralelo --output evals/multi_provider_results.json
+        --models gemma4:cloud qwen3:8b --prompts v2.1 v2.2 --mode paralelo --output evals/multi_provider_results.json
 
 Se OLLAMA_API_KEY estiver no .env, as chamadas usam o Ollama Cloud; caso
 contrário, tentam o Ollama local (http://localhost:11434).
@@ -39,7 +39,7 @@ PROJECT_ROOT = Path(__file__).resolve().parents[2]
 PROMPTS_DIR = PROJECT_ROOT / "prompts"
 
 DEFAULT_MODELS = (
-    "gpt-oss:120b",
+    "gemma4:cloud",
     "gpt-oss:20b",
 )
 DEFAULT_PROMPT_VERSIONS = (
