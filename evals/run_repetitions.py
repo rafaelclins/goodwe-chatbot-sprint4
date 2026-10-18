@@ -477,6 +477,17 @@ def main(argv: list[str] | None = None) -> int:
         action="store_true",
         help="não grava os JSONs individuais em evals/repetitions/",
     )
+    parser.add_argument(
+        "--nome-detalhe",
+        default=None,
+        help=(
+            "template do caminho (relativo à raiz do projeto) de cada execução "
+            "individual, ex.: 'evals/iter_{idx}_{ver}_run{rep}.json'. "
+            "Placeholders: {versao} ('3.0'), {ver} ('v30'), {idx} (ordem da "
+            "versão, base 1), {rep} (número da repetição). Sem esta opção, os "
+            "arquivos vão para evals/repetitions/v{versao}_rep{rep}.json."
+        ),
+    )
 
     args = parser.parse_args(argv)
 
@@ -501,7 +512,7 @@ def main(argv: list[str] | None = None) -> int:
     total_execucoes = len(args.versions) * args.repeticoes
     contador = 0
 
-    for versao in args.versions:
+    for indice_versao, versao in enumerate(args.versions, start=1):
         execucoes: list[dict[str, Any]] = []
 
         for repeticao in range(1, args.repeticoes + 1):
@@ -534,7 +545,19 @@ def main(argv: list[str] | None = None) -> int:
             )
 
             if not args.sem_detalhe:
-                caminho = PASTA_REPETICOES / f"v{versao}_rep{repeticao}.json"
+                if args.nome_detalhe:
+                    relativo = args.nome_detalhe.format(
+                        versao=versao,
+                        ver=f"v{versao.replace('.', '')}",
+                        idx=indice_versao,
+                        rep=repeticao,
+                    )
+                    caminho = Path(relativo)
+                    if not caminho.is_absolute():
+                        caminho = RAIZ_PROJETO / caminho
+                else:
+                    caminho = PASTA_REPETICOES / f"v{versao}_rep{repeticao}.json"
+
                 salvar(
                     execucao["registros"],
                     caminho,
@@ -579,7 +602,8 @@ def main(argv: list[str] | None = None) -> int:
     print(f"\n✓ Resumo em: {args.saida}")
 
     if not args.sem_detalhe:
-        print(f"✓ Execuções individuais em: {PASTA_REPETICOES}")
+        destino = args.nome_detalhe or PASTA_REPETICOES
+        print(f"✓ Execuções individuais em: {destino}")
 
     return 0
 

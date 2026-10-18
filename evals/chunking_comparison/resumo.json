@@ -1,0 +1,51 @@
+{
+  "timestamp": "2026-10-17T15:36:30",
+  "modelo_rag": "gemma4:cloud",
+  "modelo_judge": "gpt-oss:120b-cloud",
+  "temperatura": 0,
+  "casos_answerable": 13,
+  "repeticoes": 3,
+  "resultados": {
+    "512": {
+      "colecao": "goodwe_kb_512",
+      "n_chunks": 20,
+      "metricas": {
+        "faithfulness": {
+          "media": 0.8202,
+          "desvio_padrao": 0.0396,
+          "minimo": 0.79,
+          "maximo": 0.8651,
+          "n": 3
+        },
+        "answer_relevancy": {
+          "media": 0.5597,
+          "desvio_padrao": 0.0413,
+          "minimo": 0.5223,
+          "maximo": 0.604,
+          "n": 3
+        }
+      }
+    },
+    "1024": {
+      "colecao": "goodwe_kb_1024",
+      "n_chunks": 12,
+      "metricas": {
+        "faithfulness": {
+          "media": 0.7593,
+          "desvio_padrao": 0.0161,
+          "minimo": 0.75,
+          "maximo": 0.7778,
+          "n": 3
+        },
+        "answer_relevancy": {
+          "media": 0.5602,
+          "desvio_padrao": 0.0172,
+          "minimo": 0.5405,
+          "maximo": 0.5719,
+          "n": 3
+        }
+      }
+    }
+  },
+  "vencedor_consistente_1024": false
+}

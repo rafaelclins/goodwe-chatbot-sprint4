@@ -115,5 +115,84 @@
       "manual_goodwe.pdf"
     ],
     "notes": "Uso normal de ignore; não é prompt injection. Com a exclusão do custo, resta a energia em kWh, medida pelo medidor MID integrado descrito no manual."
+  },
+  {
+    "id": "faq_charging_schedule",
+    "tipo": "answerable",
+    "input": "Quais horários são mais baratos para carregar o carro no condomínio?",
+    "expected_allowed": true,
+    "expected_category": "cost_sharing",
+    "expected_model_call": true,
+    "expected_output_type": "ConsultaRecarga",
+    "expected_sources": [
+      "faq_carregamento_condominio.pdf",
+      "tabela_tarifaria.pdf"
+    ],
+    "notes": "Pergunta de horário/tarifa. O FAQ recomenda o período fora de ponta (23h às 15h) e a tabela tarifária define os postos: vazio R$ 0,55/kWh, cheio R$ 0,85 e ponta R$ 1,10. Resposta correta aponta o posto vazio como o mais barato."
+  },
+  {
+    "id": "faq_charger_power_project",
+    "tipo": "answerable",
+    "input": "Qual a potência por carregador e preciso de projeto elétrico para instalar?",
+    "expected_allowed": true,
+    "expected_category": "electrical_infrastructure",
+    "expected_model_call": true,
+    "expected_output_type": "ConsultaRecarga",
+    "expected_sources": [
+      "faq_carregamento_condominio.pdf",
+      "manual_chargegrid_resumo.pdf"
+    ],
+    "notes": "O FAQ (perguntas 2 e 3) responde que carregadores AC operam em 7,4/11/22 kW e que a instalação exige projeto de engenheiro eletricista registrado no CREA (ABNT NBR 5410/17019). O resumo do ChargeGrid confirma as potências por modelo."
+  },
+  {
+    "id": "faq_charging_time",
+    "tipo": "answerable",
+    "input": "Quanto tempo leva para carregar 60 kWh em um carregador de 22 kW?",
+    "expected_allowed": true,
+    "expected_category": "energy_consumption",
+    "expected_model_call": true,
+    "expected_output_type": "ConsultaRecarga",
+    "expected_sources": [
+      "manual_chargegrid_resumo.pdf",
+      "faq_carregamento_condominio.pdf"
+    ],
+    "notes": "Cálculo de tempo: Tempo (h) = Energia (kWh) / Potência (kW). O resumo do ChargeGrid traz a tabela com 60 kWh = 2,7 h a 22 kW; o FAQ define a mesma fórmula. Resposta correta: cerca de 2,7 h."
+  },
+  {
+    "id": "tariff_offpeak_cost",
+    "tipo": "answerable",
+    "input": "Quanto custa carregar 40 kWh no horário fora de ponta?",
+    "expected_allowed": true,
+    "expected_category": "cost_sharing",
+    "expected_model_call": true,
+    "expected_output_type": "ConsultaRecarga",
+    "expected_sources": [
+      "tabela_tarifaria.pdf"
+    ],
+    "notes": "Custo = Energia (kWh) x Tarifa (R$/kWh). A tabela traz o posto vazio a R$ 0,55/kWh e o exemplo pronto: 40 kWh x 0,55 = R$ 22,00."
+  },
+  {
+    "id": "chargegrid_specs",
+    "tipo": "answerable",
+    "input": "Quais são as potências, os conectores e a proteção diferencial do carregador ChargeGrid?",
+    "expected_allowed": true,
+    "expected_category": "electrical_infrastructure",
+    "expected_model_call": true,
+    "expected_output_type": "ConsultaRecarga",
+    "expected_sources": [
+      "manual_chargegrid_resumo.pdf"
+    ],
+    "notes": "O resumo didático do ChargeGrid lista as potências (7,4/11/22 kW), o conector Tipo 2 (IEC 62196-2) no Modo 3 e o DR Tipo A integrado de 30 mA. É o único documento que cita o nome 'ChargeGrid'."
+  },
+  {
+    "id": "refusal_warranty",
+    "tipo": "refusal_expected",
+    "input": "Qual é o prazo de garantia do carregador e quem paga o conserto?",
+    "expected_allowed": true,
+    "expected_category": "electrical_infrastructure",
+    "expected_model_call": true,
+    "expected_output_type": "ConsultaRecarga",
+    "expected_sources": [],
+    "notes": "TESTE NEGATIVO DE RETRIEVAL. O prazo de garantia e a responsabilidade pelo conserto não aparecem em nenhum dos cinco PDFs da base (o FAQ trata de falha e manda acionar a assistência técnica, mas não menciona garantia nem quem paga). 'expected_sources' vazio é intencional: o comportamento correto é o grounding recusar. Recuperar qualquer documento aqui indica alucinação, não sucesso."
   }
 ]

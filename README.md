@@ -12,12 +12,14 @@ Desenvolvido para o Challenge FIAP + GoodWe 2026.
 
 ## Integrantes
 
-- Rafael Lins — RM: 570588
-- Rafael Gandolfi — RM: 569036
-- Carlos Tavares — RM: 592949
-- Cauã Paes — RM: 569906
-- Guilherme Miranda — RM: 573107
-- João Pedro Soler — RM: 569725
+Turma: **1CCPI**
+
+- Rafael Lins — RM: 570588 — Turma: 1CCPI
+- Rafael Gandolfi — RM: 569036 — Turma: 1CCPI
+- Carlos Tavares — RM: 592949 — Turma: 1CCPI
+- Cauã Paes — RM: 569906 — Turma: 1CCPI
+- Guilherme Miranda — RM: 573107 — Turma: 1CCPI
+- João Pedro Soler — RM: 569725 — Turma: 1CCPI
 
 ---
 

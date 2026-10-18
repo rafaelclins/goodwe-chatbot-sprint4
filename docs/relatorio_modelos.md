@@ -89,6 +89,17 @@ saída pode gerar centenas de tokens de recusa repetitiva.
 | `gpt-oss:120b-cloud` | `iteration_3.json` | 0,5648 | 0,5142 | 12 | 100% |
 | `gpt-oss:20b-cloud` | `iteration_4.json` | 0,5926 | 0,4878 | 7 | 100% |
 
+### Médias das 3 execuções — etapa 3 (repetições)
+
+Modelo RAG fixo: `gemma4:cloud` · judge `gpt-oss:120b-cloud` · 15 casos (`evals/rag_cases.json`) · fonte: `evals/repeticoes_resumo.md`.
+
+| Versão do prompt | Rodadas | Faithfulness | Answer relevancy | Recusa correta |
+|---|---:|---:|---:|---:|
+| v3.0 | 3 | 0,7871 ± 0,1302 | 0,4693 ± 0,0197 | 6/6 |
+| v3.1 | 3 | 0,8086 ± 0,0533 | 0,5881 ± 0,0218 | 6/6 |
+
+Nota: as duas médias acima são por versão de prompt (não por modelo diferente), pois a etapa 3 repetiu 3× o mesmo modelo `gemma4:cloud` sob `PROMPT_RAG_VERSION` 3.0 e 3.1. Elas não substituem a comparação de modelos da tabela anterior, que usa iterações únicas.
+
 ### Latência e comportamento (`benchmark_modelos.json`, 6 perguntas, 1x cada)
 
 | Modelo | Latência média | Mediana | Mín | Máx | Com citação | Recusou |
@@ -162,35 +173,18 @@ de TODO abaixo, em particular de um judge que não seja um dos candidatos.
 
 Estes campos ficaram sem medição e **não** foram preenchidos por estimativa:
 
-- [ ] **Custo por turno em tokens (cloud).** As iterações aqui rodaram com o
-      Ollama Cloud autenticado no servidor local; a cobrança aparece em
-      <https://ollama.com/settings/usage>. Para comparar custo:
-      ```bash
-      python -c "import sys; sys.path.insert(0,'.'); \
-        from src.rag.retriever import buscar_com_scores; \
-        print(sum(len(d.page_content) for d,_ in buscar_com_scores('O que e kWh?')))"
-      ```
-      Some os tokens de entrada (system prompt + contexto + pergunta) com o
-      tamanho da resposta, e multiplique pelo preço do modelo. Anote a data: o
-      preço por 1M de tokens varia.
+- ~~[ ]~~ **Custo por turno em tokens (cloud).** não medido — fora do escopo desta sprint. Não houve consulta a `ollama.com/settings/usage` e não há medição local de custo por turno (tokens de entrada + resposta × preço do modelo).
 
-- [ ] **Qualidade com judge independente de todos os modelos.** As três linhas da
-      tabela de qualidade usam `gpt-oss:120b-cloud` como judge, e uma delas o
-      avalia como candidato. Rodar com um quarto modelo como judge eliminaria a
-      dependência:
-      ```bash
-      python evals/run_rag_eval.py --rag-model gemma4:cloud \
-          --judge-model <modelo-avaliado-em-nenhuma-outra-rodada> \
-          --output evals/iteration_5.json
-      ```
+- ~~[ ]~~ **Qualidade com judge independente de todos os modelos.** não medido — fora do escopo desta sprint. Todas as iterações usaram `gpt-oss:120b-cloud` como judge; não houve rodada com um quarto modelo como juiz.
 
-- [ ] **Repetições.** Repetir cada combinação 3× e reportar média e desvio:
-      ```bash
-      PROMPT_RAG_VERSION=3.1 python evals/run_rag_eval.py --rag-model gemma4:cloud \
-          --judge-model gpt-oss:120b-cloud --output evals/iter_1_gemma_run1.json
-      # ... run2, run3
-      python scripts/benchmark_modelos.py --modelos gemma4:cloud --repeticoes 3
-      ```
+- [x] **Repetições.** 3 execuções por versão (etapa 3), modelo `gemma4:cloud`, judge `gpt-oss:120b-cloud`, 15 casos. Dados em `evals/repeticoes_resumo.md` (também resumidos acima):
+
+  | Versão | Faithfulness | Answer relevancy |
+  |---|---|---|
+  | v3.0 | 0,7871 ± 0,1302 | 0,4693 ± 0,0197 |
+  | v3.1 | 0,8086 ± 0,0533 | 0,5881 ± 0,0218 |
+
+  Conclusão da etapa 3: o delta de faithfulness (+0,0215) é ruído (intervalos sobrepostos, p ≈ 0,81); o delta de answer_relevancy (+0,1188) é real (intervalos separados, p ≈ 0,002), a favor do v3.1.
 
 - [ ] **Comportamento local (`llama3`, 8B, CPU).** Medido nesta máquina apenas
       para comparação de velocidade: **2,4 tok/s**, 30s de carregamento, contra

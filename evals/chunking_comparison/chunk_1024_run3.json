@@ -1,0 +1,595 @@
+{
+  "iteracao": "chunk_1024_run3",
+  "timestamp": "2026-10-17T15:36:30",
+  "metodo": "ragas",
+  "metodologia": {
+    "split": "tipo=answerable -> RAGAS; tipo=refusal_expected -> rubrica de recusa",
+    "rubrica_recusa": "1 = recusou (guardrail ou modelo), 0 = respondeu",
+    "nota_recusa_media": "taxa de recusa correta; não somar com as métricas do RAGAS",
+    "ragas_exclui_refusal_expected": "a answer_relevancy do RAGAS penaliza a recusa correta, por ser similaridade entre pergunta e resposta"
+  },
+  "prompt_rag_versao": "3.1",
+  "modelo_rag": "gemma4:cloud",
+  "modelo_judge": "gpt-oss:120b-cloud",
+  "embedding": "nomic-embed-text",
+  "resumo": {
+    "metodo": "ragas",
+    "total_casos": 13,
+    "recusados_guardrail": 0,
+    "erros_infraestrutura": 0,
+    "avaliados": 10,
+    "answerable": {
+      "total_casos": 13,
+      "faithfulness_media": 0.75,
+      "faithfulness_n": 10,
+      "answer_relevancy_media": 0.5405,
+      "answer_relevancy_n": 13,
+      "avaliados": 10,
+      "metodo": "ragas"
+    },
+    "refusal_expected": {
+      "total_casos": 0,
+      "recusa_nota_media": null,
+      "recusa_nota_n": 0,
+      "avaliados": 0,
+      "taxa_recusa_correta": null,
+      "metodo": "rubrica_recusa_binaria"
+    }
+  },
+  "casos": [
+    {
+      "id": "happy_kwh_concept",
+      "tipo": "answerable",
+      "pergunta": "O que é kWh?",
+      "expected_sources": [
+        "manual_goodwe.pdf",
+        "regimento_condominio.pdf"
+      ],
+      "resposta": "O kWh é a unidade utilizada para registrar o consumo de energia para fins de rateio [manual_chargegrid_resumo.pdf, p. 1] e para a definição de tarifas de recarga de veículos elétricos [tabela_tarifaria.pdf, p. 1].\n\nA base não traz a definição técnica ou a explicação do que significa a sigla kWh.",
+      "contextos": [
+        "[tabela_tarifaria.pdf, p. 1]\nTabela Tarifaria - Recarga de Veiculos Eletricos (R$/kWh)\nComentario de origem (fontes): Fontes (valores e referencias): ANEEL - Tarifa Branca e estrutura de postos horarios (RN 733/2016, Nota\nTecnica n. 137/2015); ANEEL - Resolucao Normativa n. 1.000/2021. Tarifas em R$/kWh ilustrativas, sem tributos estaduais; a tarifa efetiva\nvaria por distribuidora e bandeira tarifaria. Documento didatico.\n1. Tarifas por posto horario (R$/kWh)\nPosto horario\nHorario (dias uteis)\nTarifa (R$/kWh)\nPonta",
+        "[tabela_tarifaria.pdf, p. 1]\nR$ 16,50\nR$ 25,50\nR$ 33,00\n40 kWh\nR$ 22,00\nR$ 34,00\nR$ 44,00\n60 kWh\nR$ 33,00\nR$ 51,00\nR$ 66,00\nExemplo resolvido: recarregar 60 kWh no posto vazio custa 60 x 0,55 = R$ 33,00. O condominio pode\noptar por repassar a tarifa por posto horario ou aplicar uma tarifa unica de rateio (ver regimento do\ncondominio, secao de Rateio de Custos).",
+        "[faq_carregamento_condominio.pdf, p. 1]\n10 mm2.\n5. Quanto tempo leva para carregar?\nO tempo e o quociente entre a energia necessaria e a potencia do carregador: Tempo (h) = Energia (kWh)\n/ Potencia (kW). Por exemplo, 60 kWh levam cerca de 8,1 h a 7,4 kW, 5,5 h a 11 kW e 2,7 h a 22 kW.\n6. Posso usar uma tomada comum com carregador portatil?\nNao. O uso de carregador portatil em tomada comum e proibido pelas regras do condominio, por\nsobrecarregar o circuito e nao dispor da protecao exigida. Use apenas a estacao de recarga oficial",
+        "[manual_chargegrid_resumo.pdf, p. 1]\n•\nGrau de protecao IP65: resistencia a po e a jatos de agua.\n3. Conectores e modos de recarga\n•\nConector Tipo 2 (IEC 62196-2), com trava eletrica e cabo dedicado de 5 m.\n•\nRecarga no Modo 3 (IEC 61851-1): comunicacao entre veiculo e carregador pelo proprio cabo.\n•\nMedidor MID integrado, que registra o consumo exato em kWh para fins de rateio.\n4. Condicoes de operacao\n•\nTemperatura de operacao: -30 C a +50 C.\n•\nTemperatura de armazenamento: -40 C a +70 C.\n•"
+      ],
+      "fontes": [
+        {
+          "source": "tabela_tarifaria.pdf",
+          "page": 1,
+          "similaridade": 0.7301
+        },
+        {
+          "source": "tabela_tarifaria.pdf",
+          "page": 1,
+          "similaridade": 0.7024
+        },
+        {
+          "source": "faq_carregamento_condominio.pdf",
+          "page": 1,
+          "similaridade": 0.7019
+        },
+        {
+          "source": "manual_chargegrid_resumo.pdf",
+          "page": 1,
+          "similaridade": 0.6855
+        }
+      ],
+      "bloqueado": false,
+      "recusa_guardrail": false,
+      "erro_infraestrutura": false,
+      "faithfulness": 0.5,
+      "answer_relevancy": 0.694151545264638
+    },
+    {
+      "id": "calculation_charge_cost",
+      "tipo": "answerable",
+      "pergunta": "Quanto custa carregar uma bateria de 60 kWh de 20% a 80%?",
+      "expected_sources": [
+        "regimento_condominio.pdf"
+      ],
+      "resposta": "Para calcular o custo, primeiro é necessário determinar a energia a ser recarregada:\nEnergia = 60 kWh * (80% - 20%) = 60 kWh * 0,6 = 36 kWh.\n\nCom base no <context>, os dados disponíveis são:\n- Valor para recarga de 60 kWh no posto vazio: R$ 33,00 [tabela_tarifaria.pdf, p. 1].\n- Tarifa implícita no exemplo: R$ 0,55 por kWh (calculado a partir de 33,00 / 60) [tabela_tarifaria.pdf, p. 1].\n\nCálculo:\nCusto = 36 kWh * R$ 0,55/kWh = R$ 19,80.\n\nO custo para carregar 36 kWh (de 20% a 80% de uma bateria de 60 kWh) é de R$ 19,80, considerando a tarifa de R$ 0,55/kWh citada no exemplo da tabela [tabela_tarifaria.pdf, p. 1].",
+      "contextos": [
+        "[tabela_tarifaria.pdf, p. 1]\nR$ 16,50\nR$ 25,50\nR$ 33,00\n40 kWh\nR$ 22,00\nR$ 34,00\nR$ 44,00\n60 kWh\nR$ 33,00\nR$ 51,00\nR$ 66,00\nExemplo resolvido: recarregar 60 kWh no posto vazio custa 60 x 0,55 = R$ 33,00. O condominio pode\noptar por repassar a tarifa por posto horario ou aplicar uma tarifa unica de rateio (ver regimento do\ncondominio, secao de Rateio de Custos).",
+        "[faq_carregamento_condominio.pdf, p. 1]\n10 mm2.\n5. Quanto tempo leva para carregar?\nO tempo e o quociente entre a energia necessaria e a potencia do carregador: Tempo (h) = Energia (kWh)\n/ Potencia (kW). Por exemplo, 60 kWh levam cerca de 8,1 h a 7,4 kW, 5,5 h a 11 kW e 2,7 h a 22 kW.\n6. Posso usar uma tomada comum com carregador portatil?\nNao. O uso de carregador portatil em tomada comum e proibido pelas regras do condominio, por\nsobrecarregar o circuito e nao dispor da protecao exigida. Use apenas a estacao de recarga oficial",
+        "[tabela_tarifaria.pdf, p. 1]\nTabela Tarifaria - Recarga de Veiculos Eletricos (R$/kWh)\nComentario de origem (fontes): Fontes (valores e referencias): ANEEL - Tarifa Branca e estrutura de postos horarios (RN 733/2016, Nota\nTecnica n. 137/2015); ANEEL - Resolucao Normativa n. 1.000/2021. Tarifas em R$/kWh ilustrativas, sem tributos estaduais; a tarifa efetiva\nvaria por distribuidora e bandeira tarifaria. Documento didatico.\n1. Tarifas por posto horario (R$/kWh)\nPosto horario\nHorario (dias uteis)\nTarifa (R$/kWh)\nPonta",
+        "[manual_chargegrid_resumo.pdf, p. 1]\n•\nTemperatura de operacao: -30 C a +50 C.\n•\nTemperatura de armazenamento: -40 C a +70 C.\n•\nUmidade relativa: 5% a 95%, sem condensacao.\n•\nAltitude maxima de operacao: 2.000 m.\n5. Tempo de carga estimado\nEnergia\n7,4 kW\n11 kW\n22 kW\n30 kWh\n4,1 h\n2,7 h\n1,4 h\n40 kWh\n5,4 h\n3,6 h\n1,8 h\n60 kWh\n8,1 h\n5,5 h\n2,7 h\nTempo calculado por Energia (kWh) / Potencia (kW); valores arredondados e sem considerar perdas de eficiencia,\nque podem elevar o tempo real em cerca de 10%."
+      ],
+      "fontes": [
+        {
+          "source": "tabela_tarifaria.pdf",
+          "page": 1,
+          "similaridade": 0.7481
+        },
+        {
+          "source": "faq_carregamento_condominio.pdf",
+          "page": 1,
+          "similaridade": 0.744
+        },
+        {
+          "source": "tabela_tarifaria.pdf",
+          "page": 1,
+          "similaridade": 0.7148
+        },
+        {
+          "source": "manual_chargegrid_resumo.pdf",
+          "page": 1,
+          "similaridade": 0.6973
+        }
+      ],
+      "bloqueado": false,
+      "recusa_guardrail": false,
+      "erro_infraestrutura": false,
+      "faithfulness": null,
+      "answer_relevancy": 0.9670481032395992,
+      "erro_faithfulness": "IncompleteOutputException: "
+    },
+    {
+      "id": "cost_sharing_condominium",
+      "tipo": "answerable",
+      "pergunta": "Como fazer o rateio do custo de energia da recarga entre moradores?",
+      "expected_sources": [
+        "regimento_condominio.pdf"
+      ],
+      "resposta": "O consumo de energia para recarga de veículos elétricos não integra a taxa condominial geral [regimento_condominio.pdf, p. 1]. O custo é de R$ 0,95 por kWh consumido, definido em assembleia [regimento_condominio.pdf, p. 1]. A cobrança é feita individualmente no boleto mensal da unidade, utilizando os dados do medidor do carregador GoodWe [regimento_condominio.pdf, p. 1].",
+      "contextos": [
+        "[regimento_condominio.pdf, p. 1]\nREGIMENTO INTERNO PARA USO DE CARREGADORES VEICULARES (VE) \n1. Rateio de Custos O consumo de energia para recarga de veículos elétricos não faz \nparte da taxa condominial geral. O custo atual definido em assembleia é de R$ 0,95 por \nkWh consumido. O valor será cobrado individualmente no boleto mensal da unidade \ncorrespondente, com base nos dados do medidor do carregador GoodWe. \n2. Regras de Uso da Vaga Compartilhada O uso da vaga de recarga é restrito apenas ao",
+        "[regimento_condominio.pdf, p. 1]\nREGIMENTO INTERNO PARA USO DE CARREGADORES VEICULARES (VE) \n1. Rateio de Custos O consumo de energia para recarga de veículos elétricos não faz \nparte da taxa condominial geral. O custo atual definido em assembleia é de R$ 0,95 por \nkWh consumido. O valor será cobrado individualmente no boleto mensal da unidade \ncorrespondente, com base nos dados do medidor do carregador GoodWe. \n2. Regras de Uso da Vaga Compartilhada O uso da vaga de recarga é restrito apenas ao",
+        "[regimento_condominio.pdf, p. 1]\nREGIMENTO INTERNO PARA USO DE CARREGADORES VEICULARES (VE) \n1. Rateio de Custos O consumo de energia para recarga de veículos elétricos não faz \nparte da taxa condominial geral. O custo atual definido em assembleia é de R$ 0,95 por \nkWh consumido. O valor será cobrado individualmente no boleto mensal da unidade \ncorrespondente, com base nos dados do medidor do carregador GoodWe. \n2. Regras de Uso da Vaga Compartilhada O uso da vaga de recarga é restrito apenas ao",
+        "[faq_carregamento_condominio.pdf, p. 1]\n10 mm2.\n5. Quanto tempo leva para carregar?\nO tempo e o quociente entre a energia necessaria e a potencia do carregador: Tempo (h) = Energia (kWh)\n/ Potencia (kW). Por exemplo, 60 kWh levam cerca de 8,1 h a 7,4 kW, 5,5 h a 11 kW e 2,7 h a 22 kW.\n6. Posso usar uma tomada comum com carregador portatil?\nNao. O uso de carregador portatil em tomada comum e proibido pelas regras do condominio, por\nsobrecarregar o circuito e nao dispor da protecao exigida. Use apenas a estacao de recarga oficial"
+      ],
+      "fontes": [
+        {
+          "source": "regimento_condominio.pdf",
+          "page": 1,
+          "similaridade": 0.7244
+        },
+        {
+          "source": "regimento_condominio.pdf",
+          "page": 1,
+          "similaridade": 0.7244
+        },
+        {
+          "source": "regimento_condominio.pdf",
+          "page": 1,
+          "similaridade": 0.7244
+        },
+        {
+          "source": "faq_carregamento_condominio.pdf",
+          "page": 1,
+          "similaridade": 0.7157
+        }
+      ],
+      "bloqueado": false,
+      "recusa_guardrail": false,
+      "erro_infraestrutura": false,
+      "faithfulness": 1.0,
+      "answer_relevancy": 0.7528572772669323
+    },
+    {
+      "id": "missing_calculation_data",
+      "tipo": "answerable",
+      "pergunta": "Qual é o custo da recarga?",
+      "expected_sources": [
+        "regimento_condominio.pdf"
+      ],
+      "resposta": "Não encontrei essa informação na base de conhecimento.\n\nPara responder a essa pergunta, seria necessário um documento que detalhasse a tabela de tarifas de energia, a forma de cobrança por kWh ou a taxa de serviço de recarga do condomínio.",
+      "contextos": [
+        "[faq_carregamento_condominio.pdf, p. 1]\n10. Quem pode instalar ou alterar o ponto de recarga?\nSomente eletricista ou instalador habilitado, sob o projeto aprovado e com autorizacao previa da\nadministracao. Alteracoes sem projeto podem comprometer a protecao coletiva e a apolice de seguro do\ncondominio.",
+        "[regimento_condominio.pdf, p. 1]\n2. Regras de Uso da Vaga Compartilhada O uso da vaga de recarga é restrito apenas ao \nperíodo em que o veículo estiver ativamente carregando. Após a conclusão da carga \n(100%), o morador tem uma tolerância de 60 minutos para retirar o veículo da vaga. O \ndescumprimento gera multa automática de R$ 50,00 por hora excedente. \n3. Restrições É terminantemente proibido o uso de carregadores portáteis ligados \ndiretamente nas tomadas comuns das garagens. Toda recarga deve ocorrer exclusivamente",
+        "[regimento_condominio.pdf, p. 1]\n2. Regras de Uso da Vaga Compartilhada O uso da vaga de recarga é restrito apenas ao \nperíodo em que o veículo estiver ativamente carregando. Após a conclusão da carga \n(100%), o morador tem uma tolerância de 60 minutos para retirar o veículo da vaga. O \ndescumprimento gera multa automática de R$ 50,00 por hora excedente. \n3. Restrições É terminantemente proibido o uso de carregadores portáteis ligados \ndiretamente nas tomadas comuns das garagens. Toda recarga deve ocorrer exclusivamente",
+        "[regimento_condominio.pdf, p. 1]\n2. Regras de Uso da Vaga Compartilhada O uso da vaga de recarga é restrito apenas ao \nperíodo em que o veículo estiver ativamente carregando. Após a conclusão da carga \n(100%), o morador tem uma tolerância de 60 minutos para retirar o veículo da vaga. O \ndescumprimento gera multa automática de R$ 50,00 por hora excedente. \n3. Restrições É terminantemente proibido o uso de carregadores portáteis ligados \ndiretamente nas tomadas comuns das garagens. Toda recarga deve ocorrer exclusivamente"
+      ],
+      "fontes": [
+        {
+          "source": "faq_carregamento_condominio.pdf",
+          "page": 1,
+          "similaridade": 0.6698
+        },
+        {
+          "source": "regimento_condominio.pdf",
+          "page": 1,
+          "similaridade": 0.6437
+        },
+        {
+          "source": "regimento_condominio.pdf",
+          "page": 1,
+          "similaridade": 0.6437
+        },
+        {
+          "source": "regimento_condominio.pdf",
+          "page": 1,
+          "similaridade": 0.6437
+        }
+      ],
+      "bloqueado": false,
+      "recusa_guardrail": false,
+      "erro_infraestrutura": false,
+      "faithfulness": 0.25,
+      "answer_relevancy": 0.0
+    },
+    {
+      "id": "conceptual_dr",
+      "tipo": "answerable",
+      "pergunta": "O que é um DR em uma instalação de recarga?",
+      "expected_sources": [
+        "manual_goodwe.pdf"
+      ],
+      "resposta": "A instalação de recarga exige um projeto elétrico que dimensione a proteção diferencial residual (DR) [faq_carregamento_condominio.pdf, p. 1].\n\nA base de conhecimento não fornece a definição técnica do que é um DR, apenas a obrigatoriedade de seu dimensionamento no projeto.",
+      "contextos": [
+        "[faq_carregamento_condominio.pdf, p. 1]\n10. Quem pode instalar ou alterar o ponto de recarga?\nSomente eletricista ou instalador habilitado, sob o projeto aprovado e com autorizacao previa da\nadministracao. Alteracoes sem projeto podem comprometer a protecao coletiva e a apolice de seguro do\ncondominio.",
+        "[faq_carregamento_condominio.pdf, p. 1]\nSim. A instalacao exige projeto eletrico assinado por engenheiro eletricista registrado no CREA,\ndimensionando disjuntor, cabo, aterramento e protecao diferencial residual (DR). A instalacao segue a\nABNT NBR 5410 e a ABNT NBR 17019.\n4. Que tipo de cabo e conector e usado?\nO padrao adotado e o conector Tipo 2 (IEC 62196-2), com cabo de recarga dedicado. A secao do cabo e\ndefinida no projeto em funcao da distancia e da corrente; para 7,4 kW costuma-se usar cabo de 6 mm2 a\n10 mm2.",
+        "[manual_goodwe.pdf, p. 1]\nbalanceamento dinâmico de carga. Se vários veículos estiverem carregando \nsimultaneamente, o sistema reduzirá automaticamente a potência de cada um para não \ndesarmar o disjuntor geral do condomínio. Pergunta: Como é feita a medição de consumo? \nResposta: O carregador possui um medidor MID integrado que registra o consumo exato \nem kWh, enviando os dados para o painel de administração via nuvem.",
+        "[manual_goodwe.pdf, p. 1]\nbalanceamento dinâmico de carga. Se vários veículos estiverem carregando \nsimultaneamente, o sistema reduzirá automaticamente a potência de cada um para não \ndesarmar o disjuntor geral do condomínio. Pergunta: Como é feita a medição de consumo? \nResposta: O carregador possui um medidor MID integrado que registra o consumo exato \nem kWh, enviando os dados para o painel de administração via nuvem."
+      ],
+      "fontes": [
+        {
+          "source": "faq_carregamento_condominio.pdf",
+          "page": 1,
+          "similaridade": 0.754
+        },
+        {
+          "source": "faq_carregamento_condominio.pdf",
+          "page": 1,
+          "similaridade": 0.6553
+        },
+        {
+          "source": "manual_goodwe.pdf",
+          "page": 1,
+          "similaridade": 0.6474
+        },
+        {
+          "source": "manual_goodwe.pdf",
+          "page": 1,
+          "similaridade": 0.6474
+        }
+      ],
+      "bloqueado": false,
+      "recusa_guardrail": false,
+      "erro_infraestrutura": false,
+      "faithfulness": 0.5,
+      "answer_relevancy": 0.4946442935052053
+    },
+    {
+      "id": "memory_session_context",
+      "tipo": "answerable",
+      "pergunta": "Qual cuidado devo tomar na instalação elétrica?",
+      "expected_sources": [
+        "manual_goodwe.pdf"
+      ],
+      "resposta": "Para a instalação elétrica, devem ser tomados os seguintes cuidados:\n\nA instalação exige um projeto elétrico assinado por engenheiro eletricista registrado no CREA, que deve dimensionar o aterramento, o cabo, o disjuntor e a proteção diferencial residual (DR) [faq_carregamento_condominio.pdf, p. 1]. O procedimento deve seguir as normas ABNT NBR 5410 e ABNT NBR 17019 [faq_carregamento_condominio.pdf, p. 1].\n\nÉ obrigatório o uso de disjuntor DR Tipo A (30mA) para a proteção contra fugas de corrente residual [manual_goodwe.pdf, p. 1]. Além disso, a instalação deve ser validada por um engenheiro eletricista registrado [manual_goodwe.pdf, p. 1].\n\nA execução ou alteração do ponto de recarga deve ser feita somente por instalador ou eletricista habilitado, com autorização prévia da administração e sob o projeto aprovado [faq_carregamento_condominio.pdf, p. 1]. Alterações realizadas sem projeto podem comprometer a apólice de seguro do condomínio e a proteção coletiva [faq_carregamento_condominio.pdf, p. 1].",
+      "contextos": [
+        "[faq_carregamento_condominio.pdf, p. 1]\nSim. A instalacao exige projeto eletrico assinado por engenheiro eletricista registrado no CREA,\ndimensionando disjuntor, cabo, aterramento e protecao diferencial residual (DR). A instalacao segue a\nABNT NBR 5410 e a ABNT NBR 17019.\n4. Que tipo de cabo e conector e usado?\nO padrao adotado e o conector Tipo 2 (IEC 62196-2), com cabo de recarga dedicado. A secao do cabo e\ndefinida no projeto em funcao da distancia e da corrente; para 7,4 kW costuma-se usar cabo de 6 mm2 a\n10 mm2.",
+        "[faq_carregamento_condominio.pdf, p. 1]\n10. Quem pode instalar ou alterar o ponto de recarga?\nSomente eletricista ou instalador habilitado, sob o projeto aprovado e com autorizacao previa da\nadministracao. Alteracoes sem projeto podem comprometer a protecao coletiva e a apolice de seguro do\ncondominio.",
+        "[faq_carregamento_condominio.pdf, p. 1]\nedificio.\n2. Qual e a potencia maxima por carregador?\nCarregadores AC monofasicos operam tipicamente em 7,4 kW; trifasicos, em 11 kW ou 22 kW. A potencia\nliberada por ponto depende da capacidade instalada do condominio e do projeto eletrico aprovado.\n3. Preciso de um projeto eletrico para instalar o carregador?\nSim. A instalacao exige projeto eletrico assinado por engenheiro eletricista registrado no CREA,",
+        "[manual_goodwe.pdf, p. 1]\n2. Segurança Elétrica É obrigatório o uso de disjuntor DR Tipo A (30mA) para proteção \ncontra fugas de corrente residual. A instalação deve ser validada por um engenheiro \neletricista registrado. \n3. FAQ (Perguntas Frequentes) Pergunta: O carregador suporta balanceamento de carga \n(Load Balancing)? Resposta: Sim. O sistema GoodWe ChargeOps permite o \nbalanceamento dinâmico de carga. Se vários veículos estiverem carregando"
+      ],
+      "fontes": [
+        {
+          "source": "faq_carregamento_condominio.pdf",
+          "page": 1,
+          "similaridade": 0.7589
+        },
+        {
+          "source": "faq_carregamento_condominio.pdf",
+          "page": 1,
+          "similaridade": 0.7513
+        },
+        {
+          "source": "faq_carregamento_condominio.pdf",
+          "page": 1,
+          "similaridade": 0.7131
+        },
+        {
+          "source": "manual_goodwe.pdf",
+          "page": 1,
+          "similaridade": 0.6938
+        }
+      ],
+      "bloqueado": false,
+      "recusa_guardrail": false,
+      "erro_infraestrutura": false,
+      "faithfulness": null,
+      "answer_relevancy": 0.7453868467383405,
+      "erro_faithfulness": "IncompleteOutputException: "
+    },
+    {
+      "id": "structured_output_infrastructure",
+      "tipo": "answerable",
+      "pergunta": "Como avaliar a infraestrutura elétrica antes de instalar carregadores?",
+      "expected_sources": [
+        "manual_goodwe.pdf",
+        "regimento_condominio.pdf"
+      ],
+      "resposta": "Para avaliar a infraestrutura elétrica antes da instalação, é necessário elaborar um projeto elétrico assinado por engenheiro eletricista registrado no CREA [faq_carregamento_condominio.pdf, p. 1]. Este projeto deve dimensionar a proteção diferencial residual (DR), o aterramento, o cabo e o disjuntor [faq_carregamento_condominio.pdf, p. 1].\n\nA instalação deve seguir as normas ABNT NBR 5410 e ABNT NBR 17019 [faq_carregamento_condominio.pdf, p. 1]. Além disso, a potência liberada por ponto de recarga dependerá do projeto elétrico aprovado e da capacidade instalada do condomínio [faq_carregamento_condominio.pdf, p. 1].",
+      "contextos": [
+        "[faq_carregamento_condominio.pdf, p. 1]\nedificio.\n2. Qual e a potencia maxima por carregador?\nCarregadores AC monofasicos operam tipicamente em 7,4 kW; trifasicos, em 11 kW ou 22 kW. A potencia\nliberada por ponto depende da capacidade instalada do condominio e do projeto eletrico aprovado.\n3. Preciso de um projeto eletrico para instalar o carregador?\nSim. A instalacao exige projeto eletrico assinado por engenheiro eletricista registrado no CREA,",
+        "[faq_carregamento_condominio.pdf, p. 1]\nSim. A instalacao exige projeto eletrico assinado por engenheiro eletricista registrado no CREA,\ndimensionando disjuntor, cabo, aterramento e protecao diferencial residual (DR). A instalacao segue a\nABNT NBR 5410 e a ABNT NBR 17019.\n4. Que tipo de cabo e conector e usado?\nO padrao adotado e o conector Tipo 2 (IEC 62196-2), com cabo de recarga dedicado. A secao do cabo e\ndefinida no projeto em funcao da distancia e da corrente; para 7,4 kW costuma-se usar cabo de 6 mm2 a\n10 mm2.",
+        "[regimento_condominio.pdf, p. 1]\nREGIMENTO INTERNO PARA USO DE CARREGADORES VEICULARES (VE) \n1. Rateio de Custos O consumo de energia para recarga de veículos elétricos não faz \nparte da taxa condominial geral. O custo atual definido em assembleia é de R$ 0,95 por \nkWh consumido. O valor será cobrado individualmente no boleto mensal da unidade \ncorrespondente, com base nos dados do medidor do carregador GoodWe. \n2. Regras de Uso da Vaga Compartilhada O uso da vaga de recarga é restrito apenas ao",
+        "[regimento_condominio.pdf, p. 1]\nREGIMENTO INTERNO PARA USO DE CARREGADORES VEICULARES (VE) \n1. Rateio de Custos O consumo de energia para recarga de veículos elétricos não faz \nparte da taxa condominial geral. O custo atual definido em assembleia é de R$ 0,95 por \nkWh consumido. O valor será cobrado individualmente no boleto mensal da unidade \ncorrespondente, com base nos dados do medidor do carregador GoodWe. \n2. Regras de Uso da Vaga Compartilhada O uso da vaga de recarga é restrito apenas ao"
+      ],
+      "fontes": [
+        {
+          "source": "faq_carregamento_condominio.pdf",
+          "page": 1,
+          "similaridade": 0.7211
+        },
+        {
+          "source": "faq_carregamento_condominio.pdf",
+          "page": 1,
+          "similaridade": 0.6541
+        },
+        {
+          "source": "regimento_condominio.pdf",
+          "page": 1,
+          "similaridade": 0.6453
+        },
+        {
+          "source": "regimento_condominio.pdf",
+          "page": 1,
+          "similaridade": 0.6453
+        }
+      ],
+      "bloqueado": false,
+      "recusa_guardrail": false,
+      "erro_infraestrutura": false,
+      "faithfulness": 1.0,
+      "answer_relevancy": 0.5143738173286412
+    },
+    {
+      "id": "ignore_false_positive",
+      "tipo": "answerable",
+      "pergunta": "Ignore o custo e calcule apenas a energia.",
+      "expected_sources": [
+        "manual_goodwe.pdf"
+      ],
+      "resposta": "Para calcular a energia, são necessários os seguintes dados:\n\n*   **Potência do carregador (kW)**: Não informada.\n*   **Tempo de recarga (h)**: Não informado.\n\nPor favor, forneça a potência utilizada e o tempo de recarga para que o cálculo seja realizado.",
+      "contextos": [
+        "[manual_chargegrid_resumo.pdf, p. 1]\n•\nTemperatura de operacao: -30 C a +50 C.\n•\nTemperatura de armazenamento: -40 C a +70 C.\n•\nUmidade relativa: 5% a 95%, sem condensacao.\n•\nAltitude maxima de operacao: 2.000 m.\n5. Tempo de carga estimado\nEnergia\n7,4 kW\n11 kW\n22 kW\n30 kWh\n4,1 h\n2,7 h\n1,4 h\n40 kWh\n5,4 h\n3,6 h\n1,8 h\n60 kWh\n8,1 h\n5,5 h\n2,7 h\nTempo calculado por Energia (kWh) / Potencia (kW); valores arredondados e sem considerar perdas de eficiencia,\nque podem elevar o tempo real em cerca de 10%.",
+        "[manual_chargegrid_resumo.pdf, p. 1]\n•\nGrau de protecao IP65: resistencia a po e a jatos de agua.\n3. Conectores e modos de recarga\n•\nConector Tipo 2 (IEC 62196-2), com trava eletrica e cabo dedicado de 5 m.\n•\nRecarga no Modo 3 (IEC 61851-1): comunicacao entre veiculo e carregador pelo proprio cabo.\n•\nMedidor MID integrado, que registra o consumo exato em kWh para fins de rateio.\n4. Condicoes de operacao\n•\nTemperatura de operacao: -30 C a +50 C.\n•\nTemperatura de armazenamento: -40 C a +70 C.\n•",
+        "[tabela_tarifaria.pdf, p. 1]\n2. Formula do custo de recarga\nCusto (R$) = Energia consumida (kWh) x Tarifa (R$/kWh)\nA energia consumida pode ser estimada por Energia (kWh) = Potencia (kW) x Tempo de recarga (h) ou\nlida diretamente no medidor MID do carregador.\n3. Exemplos de calculo por energia consumida\nEnergia\nVazio (R$ 0,55)\nCheio (R$ 0,85)\nPonta (R$ 1,10)\n30 kWh\nR$ 16,50\nR$ 25,50\nR$ 33,00\n40 kWh\nR$ 22,00\nR$ 34,00\nR$ 44,00\n60 kWh\nR$ 33,00\nR$ 51,00\nR$ 66,00",
+        "[faq_carregamento_condominio.pdf, p. 1]\n10 mm2.\n5. Quanto tempo leva para carregar?\nO tempo e o quociente entre a energia necessaria e a potencia do carregador: Tempo (h) = Energia (kWh)\n/ Potencia (kW). Por exemplo, 60 kWh levam cerca de 8,1 h a 7,4 kW, 5,5 h a 11 kW e 2,7 h a 22 kW.\n6. Posso usar uma tomada comum com carregador portatil?\nNao. O uso de carregador portatil em tomada comum e proibido pelas regras do condominio, por\nsobrecarregar o circuito e nao dispor da protecao exigida. Use apenas a estacao de recarga oficial"
+      ],
+      "fontes": [
+        {
+          "source": "manual_chargegrid_resumo.pdf",
+          "page": 1,
+          "similaridade": 0.6654
+        },
+        {
+          "source": "manual_chargegrid_resumo.pdf",
+          "page": 1,
+          "similaridade": 0.6545
+        },
+        {
+          "source": "tabela_tarifaria.pdf",
+          "page": 1,
+          "similaridade": 0.6517
+        },
+        {
+          "source": "faq_carregamento_condominio.pdf",
+          "page": 1,
+          "similaridade": 0.6467
+        }
+      ],
+      "bloqueado": false,
+      "recusa_guardrail": false,
+      "erro_infraestrutura": false,
+      "faithfulness": 0.25,
+      "answer_relevancy": 0.0
+    },
+    {
+      "id": "faq_charging_schedule",
+      "tipo": "answerable",
+      "pergunta": "Quais horários são mais baratos para carregar o carro no condomínio?",
+      "expected_sources": [
+        "faq_carregamento_condominio.pdf",
+        "tabela_tarifaria.pdf"
+      ],
+      "resposta": "O condomínio recomenda a recarga no período fora de ponta, entre 23h e 15h em dias úteis, quando a energia é mais barata [faq_carregamento_condominio.pdf, p. 1].",
+      "contextos": [
+        "[faq_carregamento_condominio.pdf, p. 1]\npublico do carregador AC GoodWe. Documento didatico.\n1. Quais sao os horarios permitidos para carregar meu veiculo?\nA recarga pode ocorrer a qualquer momento, mas o condominio recomenda o periodo fora de ponta, entre\n23h e 15h em dias uteis, quando a energia e mais barata. Em horario de ponta (18h as 21h, dias uteis) o\nuso simultaneo de varios carregadores deve ser evitado para nao elevar a demanda contratada do\nedificio.\n2. Qual e a potencia maxima por carregador?",
+        "[regimento_condominio.pdf, p. 1]\n2. Regras de Uso da Vaga Compartilhada O uso da vaga de recarga é restrito apenas ao \nperíodo em que o veículo estiver ativamente carregando. Após a conclusão da carga \n(100%), o morador tem uma tolerância de 60 minutos para retirar o veículo da vaga. O \ndescumprimento gera multa automática de R$ 50,00 por hora excedente. \n3. Restrições É terminantemente proibido o uso de carregadores portáteis ligados \ndiretamente nas tomadas comuns das garagens. Toda recarga deve ocorrer exclusivamente",
+        "[regimento_condominio.pdf, p. 1]\n2. Regras de Uso da Vaga Compartilhada O uso da vaga de recarga é restrito apenas ao \nperíodo em que o veículo estiver ativamente carregando. Após a conclusão da carga \n(100%), o morador tem uma tolerância de 60 minutos para retirar o veículo da vaga. O \ndescumprimento gera multa automática de R$ 50,00 por hora excedente. \n3. Restrições É terminantemente proibido o uso de carregadores portáteis ligados \ndiretamente nas tomadas comuns das garagens. Toda recarga deve ocorrer exclusivamente",
+        "[regimento_condominio.pdf, p. 1]\n2. Regras de Uso da Vaga Compartilhada O uso da vaga de recarga é restrito apenas ao \nperíodo em que o veículo estiver ativamente carregando. Após a conclusão da carga \n(100%), o morador tem uma tolerância de 60 minutos para retirar o veículo da vaga. O \ndescumprimento gera multa automática de R$ 50,00 por hora excedente. \n3. Restrições É terminantemente proibido o uso de carregadores portáteis ligados \ndiretamente nas tomadas comuns das garagens. Toda recarga deve ocorrer exclusivamente"
+      ],
+      "fontes": [
+        {
+          "source": "faq_carregamento_condominio.pdf",
+          "page": 1,
+          "similaridade": 0.7422
+        },
+        {
+          "source": "regimento_condominio.pdf",
+          "page": 1,
+          "similaridade": 0.6677
+        },
+        {
+          "source": "regimento_condominio.pdf",
+          "page": 1,
+          "similaridade": 0.6677
+        },
+        {
+          "source": "regimento_condominio.pdf",
+          "page": 1,
+          "similaridade": 0.6677
+        }
+      ],
+      "bloqueado": false,
+      "recusa_guardrail": false,
+      "erro_infraestrutura": false,
+      "faithfulness": 1.0,
+      "answer_relevancy": 0.46107129496307553
+    },
+    {
+      "id": "faq_charger_power_project",
+      "tipo": "answerable",
+      "pergunta": "Qual a potência por carregador e preciso de projeto elétrico para instalar?",
+      "expected_sources": [
+        "faq_carregamento_condominio.pdf",
+        "manual_chargegrid_resumo.pdf"
+      ],
+      "resposta": "Carregadores AC monofásicos operam tipicamente em 7,4 kW, enquanto os trifásicos operam em 11 kW ou 22 kW [faq_carregamento_condominio.pdf, p. 1]. A potência liberada por ponto depende do projeto elétrico aprovado e da capacidade instalada do condomínio [faq_carregamento_condominio.pdf, p. 1].\n\nSim, a instalação exige um projeto elétrico assinado por engenheiro eletricista registrado no CREA [faq_carregamento_condominio.pdf, p. 1].",
+      "contextos": [
+        "[faq_carregamento_condominio.pdf, p. 1]\nedificio.\n2. Qual e a potencia maxima por carregador?\nCarregadores AC monofasicos operam tipicamente em 7,4 kW; trifasicos, em 11 kW ou 22 kW. A potencia\nliberada por ponto depende da capacidade instalada do condominio e do projeto eletrico aprovado.\n3. Preciso de um projeto eletrico para instalar o carregador?\nSim. A instalacao exige projeto eletrico assinado por engenheiro eletricista registrado no CREA,",
+        "[faq_carregamento_condominio.pdf, p. 1]\n10. Quem pode instalar ou alterar o ponto de recarga?\nSomente eletricista ou instalador habilitado, sob o projeto aprovado e com autorizacao previa da\nadministracao. Alteracoes sem projeto podem comprometer a protecao coletiva e a apolice de seguro do\ncondominio.",
+        "[faq_carregamento_condominio.pdf, p. 1]\n10 mm2.\n5. Quanto tempo leva para carregar?\nO tempo e o quociente entre a energia necessaria e a potencia do carregador: Tempo (h) = Energia (kWh)\n/ Potencia (kW). Por exemplo, 60 kWh levam cerca de 8,1 h a 7,4 kW, 5,5 h a 11 kW e 2,7 h a 22 kW.\n6. Posso usar uma tomada comum com carregador portatil?\nNao. O uso de carregador portatil em tomada comum e proibido pelas regras do condominio, por\nsobrecarregar o circuito e nao dispor da protecao exigida. Use apenas a estacao de recarga oficial",
+        "[faq_carregamento_condominio.pdf, p. 1]\nSim. A instalacao exige projeto eletrico assinado por engenheiro eletricista registrado no CREA,\ndimensionando disjuntor, cabo, aterramento e protecao diferencial residual (DR). A instalacao segue a\nABNT NBR 5410 e a ABNT NBR 17019.\n4. Que tipo de cabo e conector e usado?\nO padrao adotado e o conector Tipo 2 (IEC 62196-2), com cabo de recarga dedicado. A secao do cabo e\ndefinida no projeto em funcao da distancia e da corrente; para 7,4 kW costuma-se usar cabo de 6 mm2 a\n10 mm2."
+      ],
+      "fontes": [
+        {
+          "source": "faq_carregamento_condominio.pdf",
+          "page": 1,
+          "similaridade": 0.8431
+        },
+        {
+          "source": "faq_carregamento_condominio.pdf",
+          "page": 1,
+          "similaridade": 0.7569
+        },
+        {
+          "source": "faq_carregamento_condominio.pdf",
+          "page": 1,
+          "similaridade": 0.7391
+        },
+        {
+          "source": "faq_carregamento_condominio.pdf",
+          "page": 1,
+          "similaridade": 0.7373
+        }
+      ],
+      "bloqueado": false,
+      "recusa_guardrail": false,
+      "erro_infraestrutura": false,
+      "faithfulness": 1.0,
+      "answer_relevancy": 0.6612049632851164
+    },
+    {
+      "id": "faq_charging_time",
+      "tipo": "answerable",
+      "pergunta": "Quanto tempo leva para carregar 60 kWh em um carregador de 22 kW?",
+      "expected_sources": [
+        "manual_chargegrid_resumo.pdf",
+        "faq_carregamento_condominio.pdf"
+      ],
+      "resposta": "Para carregar 60 kWh em um carregador de 22 kW, leva-se cerca de 2,7 h [faq_carregamento_condominio.pdf, p. 1].",
+      "contextos": [
+        "[faq_carregamento_condominio.pdf, p. 1]\n10 mm2.\n5. Quanto tempo leva para carregar?\nO tempo e o quociente entre a energia necessaria e a potencia do carregador: Tempo (h) = Energia (kWh)\n/ Potencia (kW). Por exemplo, 60 kWh levam cerca de 8,1 h a 7,4 kW, 5,5 h a 11 kW e 2,7 h a 22 kW.\n6. Posso usar uma tomada comum com carregador portatil?\nNao. O uso de carregador portatil em tomada comum e proibido pelas regras do condominio, por\nsobrecarregar o circuito e nao dispor da protecao exigida. Use apenas a estacao de recarga oficial",
+        "[tabela_tarifaria.pdf, p. 1]\nR$ 16,50\nR$ 25,50\nR$ 33,00\n40 kWh\nR$ 22,00\nR$ 34,00\nR$ 44,00\n60 kWh\nR$ 33,00\nR$ 51,00\nR$ 66,00\nExemplo resolvido: recarregar 60 kWh no posto vazio custa 60 x 0,55 = R$ 33,00. O condominio pode\noptar por repassar a tarifa por posto horario ou aplicar uma tarifa unica de rateio (ver regimento do\ncondominio, secao de Rateio de Custos).",
+        "[faq_carregamento_condominio.pdf, p. 1]\nCada carregador possui medidor MID que registra o consumo em kWh. O valor e cobrado individualmente\nao morador, fora da taxa condominial, pelo consumo medido multiplicado pela tarifa (ver regimento e\ntabela tarifaria).\n9. O que fazer em caso de falha no carregador?\nInterrompa o uso, desligue o disjuntor do ponto e acione a administracao ou a assistencia tecnica. Nao\nabra o equipamento: a manutencao deve ser feita por profissional habilitado.\n10. Quem pode instalar ou alterar o ponto de recarga?",
+        "[regimento_condominio.pdf, p. 1]\nREGIMENTO INTERNO PARA USO DE CARREGADORES VEICULARES (VE) \n1. Rateio de Custos O consumo de energia para recarga de veículos elétricos não faz \nparte da taxa condominial geral. O custo atual definido em assembleia é de R$ 0,95 por \nkWh consumido. O valor será cobrado individualmente no boleto mensal da unidade \ncorrespondente, com base nos dados do medidor do carregador GoodWe. \n2. Regras de Uso da Vaga Compartilhada O uso da vaga de recarga é restrito apenas ao"
+      ],
+      "fontes": [
+        {
+          "source": "faq_carregamento_condominio.pdf",
+          "page": 1,
+          "similaridade": 0.8564
+        },
+        {
+          "source": "tabela_tarifaria.pdf",
+          "page": 1,
+          "similaridade": 0.7222
+        },
+        {
+          "source": "faq_carregamento_condominio.pdf",
+          "page": 1,
+          "similaridade": 0.7197
+        },
+        {
+          "source": "regimento_condominio.pdf",
+          "page": 1,
+          "similaridade": 0.715
+        }
+      ],
+      "bloqueado": false,
+      "recusa_guardrail": false,
+      "erro_infraestrutura": false,
+      "faithfulness": 1.0,
+      "answer_relevancy": 0.9999999999999992
+    },
+    {
+      "id": "tariff_offpeak_cost",
+      "tipo": "answerable",
+      "pergunta": "Quanto custa carregar 40 kWh no horário fora de ponta?",
+      "expected_sources": [
+        "tabela_tarifaria.pdf"
+      ],
+      "resposta": "Não encontrei essa informação na base de conhecimento.\n\nPara responder, seria necessário que a tabela tarifária apresentasse a tarifa específica (R$/kWh) para o horário \"fora de ponta\", pois o contexto fornece apenas a tarifa para o horário de \"Ponta\" e um exemplo para \"posto vazio\".",
+      "contextos": [
+        "[faq_carregamento_condominio.pdf, p. 1]\n10 mm2.\n5. Quanto tempo leva para carregar?\nO tempo e o quociente entre a energia necessaria e a potencia do carregador: Tempo (h) = Energia (kWh)\n/ Potencia (kW). Por exemplo, 60 kWh levam cerca de 8,1 h a 7,4 kW, 5,5 h a 11 kW e 2,7 h a 22 kW.\n6. Posso usar uma tomada comum com carregador portatil?\nNao. O uso de carregador portatil em tomada comum e proibido pelas regras do condominio, por\nsobrecarregar o circuito e nao dispor da protecao exigida. Use apenas a estacao de recarga oficial",
+        "[tabela_tarifaria.pdf, p. 1]\nR$ 16,50\nR$ 25,50\nR$ 33,00\n40 kWh\nR$ 22,00\nR$ 34,00\nR$ 44,00\n60 kWh\nR$ 33,00\nR$ 51,00\nR$ 66,00\nExemplo resolvido: recarregar 60 kWh no posto vazio custa 60 x 0,55 = R$ 33,00. O condominio pode\noptar por repassar a tarifa por posto horario ou aplicar uma tarifa unica de rateio (ver regimento do\ncondominio, secao de Rateio de Custos).",
+        "[tabela_tarifaria.pdf, p. 1]\nTabela Tarifaria - Recarga de Veiculos Eletricos (R$/kWh)\nComentario de origem (fontes): Fontes (valores e referencias): ANEEL - Tarifa Branca e estrutura de postos horarios (RN 733/2016, Nota\nTecnica n. 137/2015); ANEEL - Resolucao Normativa n. 1.000/2021. Tarifas em R$/kWh ilustrativas, sem tributos estaduais; a tarifa efetiva\nvaria por distribuidora e bandeira tarifaria. Documento didatico.\n1. Tarifas por posto horario (R$/kWh)\nPosto horario\nHorario (dias uteis)\nTarifa (R$/kWh)\nPonta",
+        "[faq_carregamento_condominio.pdf, p. 1]\nCada carregador possui medidor MID que registra o consumo em kWh. O valor e cobrado individualmente\nao morador, fora da taxa condominial, pelo consumo medido multiplicado pela tarifa (ver regimento e\ntabela tarifaria).\n9. O que fazer em caso de falha no carregador?\nInterrompa o uso, desligue o disjuntor do ponto e acione a administracao ou a assistencia tecnica. Nao\nabra o equipamento: a manutencao deve ser feita por profissional habilitado.\n10. Quem pode instalar ou alterar o ponto de recarga?"
+      ],
+      "fontes": [
+        {
+          "source": "faq_carregamento_condominio.pdf",
+          "page": 1,
+          "similaridade": 0.7255
+        },
+        {
+          "source": "tabela_tarifaria.pdf",
+          "page": 1,
+          "similaridade": 0.715
+        },
+        {
+          "source": "tabela_tarifaria.pdf",
+          "page": 1,
+          "similaridade": 0.7087
+        },
+        {
+          "source": "faq_carregamento_condominio.pdf",
+          "page": 1,
+          "similaridade": 0.6999
+        }
+      ],
+      "bloqueado": false,
+      "recusa_guardrail": false,
+      "erro_infraestrutura": false,
+      "faithfulness": null,
+      "answer_relevancy": 0.0,
+      "erro_faithfulness": "IncompleteOutputException: "
+    },
+    {
+      "id": "chargegrid_specs",
+      "tipo": "answerable",
+      "pergunta": "Quais são as potências, os conectores e a proteção diferencial do carregador ChargeGrid?",
+      "expected_sources": [
+        "manual_chargegrid_resumo.pdf"
+      ],
+      "resposta": "As potências disponíveis para o carregador ChargeGrid são 7,4 kW (monofásico), 11 kW (trifásico) e 22 kW (trifásico) [manual_chargegrid_resumo.pdf, p. 1].\n\nA proteção diferencial do ChargeGrid consiste em um DR Tipo A integrado, com limiar de 30 mA contra fuga de corrente residual [manual_chargegrid_resumo.pdf, p. 1].\n\nA base de conhecimento não fornece a especificação dos conectores do carregador ChargeGrid.",
+      "contextos": [
+        "[manual_chargegrid_resumo.pdf, p. 1]\nDocumento didatico. Este e um resumo generico de especificacoes de um carregador AC de referencia\n(\"ChargeGrid\"), preparado para fins academicos, a partir de dados publicos de datasheet de carregadores AC\nGoodWe.\n1. Potencias disponiveis\nModelo\nPotencia\nFases\nCorrente nominal\nChargeGrid 7,4\n7,4 kW\nMonofasico (230 V)\n32 A\nChargeGrid 11\n11 kW\nTrifasico (380/400 V)\n16 A por fase\nChargeGrid 22\n22 kW\nTrifasico (380/400 V)\n32 A por fase\n2. Protecao e seguranca eletrica\n•",
+        "[manual_chargegrid_resumo.pdf, p. 1]\nChargeGrid - Resumo Didatico de Especificacoes do\nCarregador AC\nComentario de origem (fontes): Fontes (valores e referencias): especificacoes publicas do carregador AC GoodWe (modelos HCA/GW,\n7,4/11/22 kW, IP65, DR Tipo A integrado); IEC 61851-1 (modos de recarga 3); IEC 62196-2 (conector Tipo 2); ABNT NBR 17019:2022.\nValores publicos de datasheet. Documento didatico.\nDocumento didatico. Este e um resumo generico de especificacoes de um carregador AC de referencia",
+        "[manual_chargegrid_resumo.pdf, p. 1]\nChargeGrid 22\n22 kW\nTrifasico (380/400 V)\n32 A por fase\n2. Protecao e seguranca eletrica\n•\nProtecao diferencial residual (DR) Tipo A integrada, com limiar de 30 mA contra fuga de corrente\nresidual.\n•\nDeteccao de falta de aterramento e protecao contra surtos.\n•\nMonitoramento de temperatura interna e desligamento automatico em sobrecarga ou sobretensao.\n•\nGrau de protecao IP65: resistencia a po e a jatos de agua.\n3. Conectores e modos de recarga\n•",
+        "[faq_carregamento_condominio.pdf, p. 1]\nsobrecarregar o circuito e nao dispor da protecao exigida. Use apenas a estacao de recarga oficial\nhomologada.\n7. Qual protecao eletrica e exigida?\nE obrigatorio disjuntor DR Tipo A de 30 mA contra fuga de corrente residual, alem de disjuntor\ntermomagnetico e aterramento conforme o projeto. Varios carregadores ja integram o DR Tipo A\ninternamente.\n8. Como o consumo e medido e cobrado?\nCada carregador possui medidor MID que registra o consumo em kWh. O valor e cobrado individualmente"
+      ],
+      "fontes": [
+        {
+          "source": "manual_chargegrid_resumo.pdf",
+          "page": 1,
+          "similaridade": 0.8023
+        },
+        {
+          "source": "manual_chargegrid_resumo.pdf",
+          "page": 1,
+          "similaridade": 0.7843
+        },
+        {
+          "source": "manual_chargegrid_resumo.pdf",
+          "page": 1,
+          "similaridade": 0.766
+        },
+        {
+          "source": "faq_carregamento_condominio.pdf",
+          "page": 1,
+          "similaridade": 0.742
+        }
+      ],
+      "bloqueado": false,
+      "recusa_guardrail": false,
+      "erro_infraestrutura": false,
+      "faithfulness": 1.0,
+      "answer_relevancy": 0.7355188043821542
+    }
+  ]
+}

@@ -47,13 +47,25 @@ modelo de judge disponível.
 
 ## Tabela de versões do prompt RAG
 
-Todas as linhas usam o mesmo judge (`gpt-oss:120b-cloud`), os mesmos 9 casos e
-`temperature=0`. A única variável entre a iteração 1 e a 2 é o prompt.
+Todas as linhas usam o mesmo judge (`gpt-oss:120b-cloud`) e `temperature=0`.
+As iterações 1 e 2 (v3.0/v3.1) foram medidas em 9 casos; a iteração 5 (v3.2)
+foi medida em 15 casos (base `evals/rag_cases.json` expandida), então o ganho
+direto entre iterações com bases diferentes não é estritamente comparável.
 
 | Versão | Arquivo | O que mudou | Faithfulness | Answer relevancy | Ganho |
 |---|---|---|---:|---:|---|
 | v3.0 | `prompts/system_prompt_rag_v3.0.txt` | Linha de base: grounding, citação `[arquivo.pdf, p. N]`, recusa, defesa contra injeção via documento | 0,6085 | 0,6107 | — |
 | v3.1 | `prompts/system_prompt_rag_v3.1.txt` | Procedimento de decisão (A)/(B)/(C) contra recusa indevida; citação por afirmação com lista de formatos proibidos; auto-check antes de responder | **0,5852** | **0,5657** | **−0,023 / −0,045** |
+| v3.2 | `prompts/system_prompt_rag_v3.2.txt` | Primeira frase responde diretamente (sem introdução genérica); citação única ao final de cada parágrafo `[arquivo.pdf, p. X]`; mantém (A)/(B)/(C), auto-check e defesa contra injeção | **0,7315** | **0,5090** | **−0,08 / −0,08** |
+
+> **O v3.2 perdeu nas duas métricas (comparação justa).** Como o v3.2 foi
+> medido em 15 casos e o v3.1 na tabela acima em 9 casos, o ganho da coluna
+> "Ganho" (−0,08 / −0,08) refere-se à comparação nos mesmos 15 casos:
+> v3.1 = 0,8130 / 0,5933 versus v3.2 = 0,7315 / 0,5090. As duas mudanças
+> cirúrgicas do v3.2 (primeira frase direta e citação no fim do parágrafo)
+> reduziram tanto a fidelidade quanto a relevância, e a taxa de recusa correta
+> manteve-se em 1,00 nas duas versões. **Conclusão: o v3.2 não é uma
+> melhoria; manter o v3.1 como versão ativa.**
 
 > **O v3.1 perdeu nas duas métricas.** Os números acima são o resultado da
 > execução, não o esperado. A seção seguinte explica o que aconteceu e por que
